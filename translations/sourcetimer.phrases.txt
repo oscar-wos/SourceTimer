@@ -1,0 +1,65 @@
+"Phrases"
+{
+
+	"menu_zone"
+	{
+		"en"		"Zone Menu"
+	}
+
+	"menu_addzone"
+	{
+		"en"		"Add Zone"
+	}
+
+	"menu_addzone_saveregion"
+	{
+		"en"		"Save Region"
+	}
+
+	"menu_addzone_editp1"
+	{
+		"en"		"Precise Edit (P1 - Purple)"
+	}
+
+	"menu_addzone_editp2"
+	{
+		"en"		"Precise Edit (P2 - Blue)"
+	}
+
+	"menu_addzone_editx"
+	{
+		"en"		"Edit (X - Red)"
+	}
+
+	"menu_addzone_edity"
+	{
+		"en"		"Edit (Y - Green)"
+	}
+
+	"menu_addzone_editz"
+	{
+		"en"		"Edit (Z - Blue)"
+	}
+
+	"menu_delzone"
+	{
+		"en"		"Delete Zone"
+	}
+
+	"menu_editzone"
+	{
+		"en"		"Edit Zone"
+	}
+
+	"check_ingame"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"You must be {1}In-Game {2}to use this command"
+	}
+
+	"check_alive"
+	{
+		"#format"	"{1:s},{2:s}"
+		"en"		"You must be {1}Alive {2}to use this command"
+	}
+}
