@@ -3,7 +3,7 @@ bool Misc_CheckPlayer(int iClient, int iType, bool bMessage = false) {
 
 	if (iType >= PLAYER_VALID) if (IsFakeClient(iClient)) return false;
 
-	if (iType >= PLAYER_INGAME) if (iClient == 0 || !IsValidEntity(iClient) || !IsClientConnected(iClient) || !IsClientInGame(iClient)) {
+	if (iType >= PLAYER_INGAME) if (iClient == 0 || !IsValidEntity(iClient) || !IsClientInGame(iClient)) {
 		if (bMessage) { Format(cBuffer, 512, "%s%s%t", TEXT_PREFIX, TEXT_DEFAULT, "check_ingame", TEXT_HIGHLIGHT, TEXT_DEFAULT); Timer_CommandReply(iClient, cBuffer); }
 		return false;
 	}

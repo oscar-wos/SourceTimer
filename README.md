@@ -4,7 +4,7 @@ A timer used for recording player times on skill based maps
 
 ### Installing
 
-Drag the compiled .smx, and translations or download the whole scripting folder and compile yourself. Server needs a map change in order to load translations into memory.
+Drag the compiled .smx, and translations or download the whole scripting folder and compile yourself.
 
 ### Compiler
 

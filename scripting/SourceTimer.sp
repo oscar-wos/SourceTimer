@@ -25,7 +25,7 @@
 #define TIMER_INTERVAL 0.1
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.02"
+#define PLUGIN_VERSION "0.03"
 
 #include <sourcemod>
 #include <sdktools>
@@ -67,11 +67,11 @@ public void OnMapStart() {
 }
 
 public void OnClientPostAdminCheck(int iClient) {
-	g_Global.Players.ClearClient(iClient);
+
 }
 
 public void OnClientDisconnect(int iClient) {
-	g_Global.Players.ClearClient(iClient);
+	g_Global.Players.Clear(iClient);
 }
 
 public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
@@ -88,13 +88,8 @@ public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fV
 		case 0: {
 			switch (pPlayer.Admin.Option) {
 				case 0: {
-					float fEye[3], fAngle[3], fPos[3];
-
-					GetClientEyePosition(iClient, fEye);
-					GetClientEyeAngles(iClient, fAngle);
-
-					TR_TraceRayFilter(fEye, fAngle, MASK_SOLID, RayType_Infinite, Filter_HitSelf, iClient);
-					if (TR_DidHit()) TR_GetEndPosition(fPos);
+					float fPos[3];
+					Zone_RayTrace(iClient, fPos);
 
 					if (iButtons & IN_ATTACK) { g_Global.Players.SetAdminZoneX(iClient, fPos); }
 					else { g_Global.Players.SetAdminZoneY(iClient, fPos); }

@@ -1,8 +1,8 @@
-void Zone_Draw(int iClient, float fX[3], float fY[3], int iColor, bool bAll) {
+void Zone_Draw(int iClient, float xPos[3], float yPos[3], int iColor, bool bAll) {
 	float fPoints[8][3];
 
-	fPoints[0] = fX;
-	fPoints[7] = fY;
+	fPoints[0] = xPos;
+	fPoints[7] = yPos;
 
 	fPoints[1][0] = fPoints[0][0];
 	fPoints[1][1] = fPoints[7][1];

@@ -2,6 +2,8 @@
 #define PLAYER_INGAME 1
 #define PLAYER_ALIVE 2
 
+#define ZONES_TOTAL 3
+
 #define COLORS_MAX 19
 
 // csgocolors.inc - Author: exvel, Editor: Popoklopsi, Powerlord, Zipcore, Bara
@@ -53,8 +55,14 @@ int C_Colors[][] = {
 	{ 255, 0, 0, 255 }, // Red
 	{ 0, 255, 0, 255 }, // Green
 	{ 0, 0, 255, 255 }, // Blue
-	{ 255, 255, 102, 255 }, // Admin Zoning In-Progress
-	{ 0, 255, 102, 255 } // Admin Zoning Complete
+	{ 255, 255, 127, 255 }, // Admin Zoning In-Progress
+	{ 0, 255, 127, 255 }, // Admin Zoning Complete
+	{ 255, 127, 0, 255 }, // N Checkpoint
+	{ 0, 255, 0, 255 }, // N Start
+	{ 255, 0, 0, 255 }, // N End
+	{ 200, 100, 0, 255 }, // B Checkpoint
+	{ 23, 150, 102, 255 }, // B Start
+	{ 153, 0, 153, 255 } // B End
 }
 
 stock void Timer_CommandReply(int iClient, const char[] cMessage, any ...) {
@@ -79,51 +87,9 @@ void RemoveTags(char[] cMessage, int iLength) {
 	for (int i = 0; i < COLORS_MAX; i++) { ReplaceString(cMessage, iLength, C_TagCodes[i], ""); }
 }
 
-methodmap Admin < StringMap {
-	public Admin() {
-		StringMap smMap = new StringMap();
-		smMap.SetValue("setting", -1);
-		smMap.SetValue("option", -1);
-
-		return view_as<Admin>(smMap);
-	}
-
-	public void Clear() {
-		this.SetValue("setting", -1);
-		this.SetValue("option", -1);
-	}
-
-	property int Setting {
-		public get() {
-			int iSetting;
-			this.GetValue("setting", iSetting);
-
-			return iSetting;
-		}
-
-		public set(int iSetting) {
-			this.SetValue("setting", iSetting);
-		}
-	}
-
-	property int Option {
-		public get() {
-			int iOption;
-			this.GetValue("option", iOption);
-
-			return iOption;
-		}
-
-		public set(int iOption) {
-			this.SetValue("option", iOption);
-		}
-	}
-}
-
 methodmap Zone < StringMap {
 	public Zone() {
 		StringMap smMap = new StringMap();
-
 		smMap.SetArray("x", {0.0, 0.0, 0.0}, 3);
 		smMap.SetArray("y", {0.0, 0.0, 0.0}, 3);
 
@@ -135,30 +101,20 @@ methodmap Zone < StringMap {
 		return view_as<Zone>(smMap);
 	}
 
-	public void Clear() {
-		this.SetArray("x", {0.0, 0.0, 0.0}, 3);
-		this.SetArray("y", {0.0, 0.0, 0.0}, 3);
-
-		this.SetValue("id", -1);
-		this.SetValue("mid", -1);
-		this.SetValue("type", -1);
-		this.SetValue("group", -1);
+	public void GetX(float[] xPos) {
+		this.GetArray("x", xPos, 3);
 	}
 
-	public void SetX(const float[] fX) {
-		this.SetArray("x", fX, 3);
+	public void GetY(float[] yPos) {
+		this.GetArray("y", yPos, 3);
 	}
 
-	public void SetY(const float[] fY) {
-		this.SetArray("y", fY, 3);
+	public void SetX(const float[] xPos) {
+		this.SetArray("x", xPos, 3);
 	}
 
-	public void GetX(float[] fX) {
-		this.GetArray("x", fX, 3);
-	}
-
-	public void GetY(float[] fY) {
-		this.GetArray("y", fY, 3);
+	public void SetY(const float[] yPos) {
+		this.SetArray("y", yPos, 3);
 	}
 
 	property int Id {
@@ -216,24 +172,59 @@ methodmap Zone < StringMap {
 
 methodmap Zones < ArrayList {
 	public Zones() { return view_as<Zones>(new ArrayList()); }
+
+	public void CalculateCentre(float xPos[3], float yPos[3], float fCentre[3]) {
+
+	}
+
+	public void CalculateSpawn(float xPos[3], float yPos[3], float fSpawn[3]) {
+
+	}
+}
+
+methodmap Admin < StringMap {
+	public Admin() {
+		StringMap smMap = new StringMap();
+		smMap.SetValue("setting", -1);
+		smMap.SetValue("option", -1);
+
+		return view_as<Admin>(smMap);
+	}
+
+	property int Setting {
+		public get() {
+			int iSetting;
+			this.GetValue("setting", iSetting);
+
+			return iSetting;
+		}
+
+		public set(int iSetting) {
+			this.SetValue("setting", iSetting);
+		}
+	}
+
+	property int Option {
+		public get() {
+			int iOption;
+			this.GetValue("option", iOption);
+
+			return iOption;
+		}
+
+		public set(int iOption) {
+			this.SetValue("option", iOption);
+		}
+	}
 }
 
 methodmap Player < StringMap {
 	public Player() {
 		StringMap smMap = new StringMap();
-
 		smMap.SetValue("admin", view_as<Admin>(new Admin()));
 		smMap.SetValue("zone", view_as<Zone>(new Zone()));
 
 		return view_as<Player>(smMap);
-	}
-
-	public void Clear() {
-		Admin aAdmin;
-		Zone zZone;
-
-		if (this.GetValue("admin", aAdmin)) { aAdmin.Clear(); }
-		if (this.GetValue("zone", zZone)) { zZone.Clear(); }
 	}
 
 	property Admin Admin {
@@ -266,34 +257,43 @@ methodmap Player < StringMap {
 methodmap Players < ArrayList {
 	public Players() {
 		ArrayList alList = new ArrayList();
-		alList.Resize(MaxClients + 1);
+		for (int i = 1; i <= MaxClients; i++) { alList.Push(new Player()); }
 
 		return view_as<Players>(alList);
 	}
 
-	public void Init() {
-		Player pPlayer = new Player();
-
-		for (int i = 0; i <= MaxClients; i++) { this.Set(i, pPlayer); }
+	public Admin GetAdmin(int iClient) {
+		Player pPlayer = view_as<Player>(this.Get(iClient));
+		return view_as<Admin>(pPlayer.Admin);
 	}
 
-	public void Clear() {
-		Player pPlayer;
+	public void SetAdmin(int iClient, Admin aAdmin) {
+		Player pPlayer = view_as<Player>(this.Get(iClient));
+		pPlayer.Admin = aAdmin;
 
-		for (int i = 0; i <= MaxClients; i++) {
-			pPlayer = view_as<Player>(this.Get(i));
-			pPlayer.Clear();
-		}
-	}
-
-	public void InitClient(int iClient) {
-		Player pPlayer = new Player();
 		this.Set(iClient, pPlayer);
 	}
 
-	public void ClearClient(int iClient) {
+	public Zone GetZone(int iClient) {
 		Player pPlayer = view_as<Player>(this.Get(iClient));
-		pPlayer.Clear();
+		return view_as<Zone>(pPlayer.Zone);
+	}
+
+	public void SetZone(int iClient, Zone zZone) {
+		Player pPlayer = view_as<Player>(this.Get(iClient));
+		pPlayer.Zone = zZone;
+
+		this.Set(iClient, pPlayer);
+	}
+
+	public int GetAdminSetting(int iClient) {
+		Player pPlayer = view_as<Player>(this.Get(iClient));
+		return pPlayer.Admin.Setting;
+	}
+
+	public int GetAdminOption(int iClient) {
+		Player pPlayer = view_as<Player>(this.Get(iClient));
+		return pPlayer.Admin.Option;
 	}
 
 	public void SetAdminSetting(int iClient, int iSetting) {
@@ -310,47 +310,70 @@ methodmap Players < ArrayList {
 		this.Set(iClient, pPlayer);
 	}
 
-	public int GetAdminSetting(int iClient) {
+	public void GetAdminZoneX(int iClient, float xPos[3]) {
 		Player pPlayer = view_as<Player>(this.Get(iClient));
-
-		return pPlayer.Admin.Setting;
+		pPlayer.Zone.GetX(xPos);
 	}
 
-	public int GetAdminOption(int iClient) {
+	public void GetAdminZoneY(int iClient, float yPos[3]) {
 		Player pPlayer = view_as<Player>(this.Get(iClient));
-
-		return pPlayer.Admin.Option;
+		pPlayer.Zone.GetY(yPos);
 	}
 
-	public void SetAdminZoneX(int iClient, float fX[3]) {
+	public void SetAdminZoneX(int iClient, float xPos[3]) {
 		Player pPlayer = view_as<Player>(this.Get(iClient));
-		pPlayer.Zone.SetX(fX);
+		pPlayer.Zone.SetX(xPos);
 
 		this.Set(iClient, pPlayer);
 	}
 
-	public void SetAdminZoneY(int iClient, float fY[3]) {
+	public void SetAdminZoneY(int iClient, float yPos[3]) {
 		Player pPlayer = view_as<Player>(this.Get(iClient));
-		pPlayer.Zone.SetY(fY);
+		pPlayer.Zone.SetY(yPos);
 
 		this.Set(iClient, pPlayer);
 	}
 
-	public void GetAdminZoneX(int iClient, float fX[3]) {
+	public int GetAdminZoneType(int iClient) {
 		Player pPlayer = view_as<Player>(this.Get(iClient));
-		pPlayer.Zone.GetX(fX);
+		return pPlayer.Zone.Type;
 	}
 
-	public void GetAdminZoneY(int iClient, float fY[3]) {
+	public void SetAdminZoneType(int iClient, int iType) {
 		Player pPlayer = view_as<Player>(this.Get(iClient));
-		pPlayer.Zone.GetY(fY);
+		pPlayer.Zone.Type = iType;
+
+		this.Set(iClient, pPlayer);
+	}
+
+	public int GetAdminZoneGroup(int iClient) {
+		Player pPlayer = view_as<Player>(this.Get(iClient));
+		return pPlayer.Zone.Group;
+	}
+
+	public void SetAdminZoneGroup(int iClient, int iGroup) {
+		Player pPlayer = view_as<Player>(this.Get(iClient));
+		pPlayer.Zone.Group = iGroup;
+
+		this.Set(iClient, pPlayer);
+	}
+
+	public void ClearAdmin(int iClient) {
+		delete this.GetAdmin(iClient);
+		delete this.GetZone(iClient);
+
+		this.SetAdmin(iClient, new Admin());
+		this.SetZone(iClient, new Zone());
+	}
+
+	public void Clear(int iClient) {
+		this.ClearAdmin(iClient);
 	}
 }
 
 methodmap Models < StringMap {
 	public Models() {
 		StringMap smMap = new StringMap();
-
 		smMap.SetValue("blueglow", PrecacheModel("sprites/blueglow1.vmt"));
 		smMap.SetValue("redglow", PrecacheModel("sprites/purpleglow1.vmt"));
 		smMap.SetValue("laser", PrecacheModel("materials/sprites/laserbeam.vmt"));
@@ -399,29 +422,23 @@ methodmap Models < StringMap {
 methodmap Global < StringMap {
 	public Global() {
 		StringMap smMap = new StringMap();
-		Models mModels = new Models();
-		Players pPlayers = new Players();
+		smMap.SetValue("models", new Models());
+		smMap.SetValue("players", new Players());
+		smMap.SetValue("zones", new Zones());
+		smMap.SetValue("zonegroups", 1);
 
-		smMap.SetValue("models", mModels);
-
-		pPlayers.Init();
-		smMap.SetValue("players", pPlayers);
 		return view_as<Global>(smMap);
 	}
 
-	public void Clear() {
-		Handle hTimer;
-		Players pPlayers;
-		Zones zZones;
+	public int CalculateZoneType(int iType) {
+		return iType % ZONES_TOTAL;
+	}
 
-		this.GetValue("timer", view_as<Handle>(hTimer));
-		delete hTimer;
+	public int CalculateZoneGroup(int iGroup) {
+		int iZoneGroups;
+		this.GetValue("zonegroups", iZoneGroups);
 
-		this.GetValue("players", view_as<Players>(pPlayers));
-		pPlayers.Clear();
-
-		this.GetValue("zones", view_as<Zones>(zZones));
-		zZones.Clear();
+		return iGroup % iZoneGroups;
 	}
 
 	property Handle Timer {
@@ -473,6 +490,19 @@ methodmap Global < StringMap {
 
 		public set(Zones zZones) {
 			this.SetValue("zones", zZones);
+		}
+	}
+
+	property int ZoneGroups {
+		public get() {
+			int iZoneGroups;
+			this.GetValue("zonegroups", iZoneGroups);
+
+			return iZoneGroups;
+		}
+
+		public set(int iZoneGroups) {
+			this.SetValue("zonegroups", iZoneGroups);
 		}
 	}
 }
