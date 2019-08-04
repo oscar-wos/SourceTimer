@@ -49,13 +49,12 @@ char C_TagCodes[][] = {
 	"\x0F"
 }
 
-enum ModelsPrecache {
-	LaserMaterial,
-	HaloMaterial,
-	GlowSprite,
-	BlueGlowSprite,
-	PurpleGlowSprite,
-	Barrel
+int C_Colors[][] = {
+	{ 255, 0, 0, 255 }, // Red
+	{ 0, 255, 0, 255 }, // Green
+	{ 0, 0, 255, 255 }, // Blue
+	{ 255, 255, 102, 255 }, // Admin Zoning In-Progress
+	{ 0, 255, 102, 255 } // Admin Zoning Complete
 }
 
 stock void Timer_CommandReply(int iClient, const char[] cMessage, any ...) {
@@ -122,7 +121,29 @@ methodmap Admin < StringMap {
 }
 
 methodmap Zone < StringMap {
-	public Zone() { return view_as<Zone>(new StringMap()); }
+	public Zone() {
+		StringMap smMap = new StringMap();
+
+		smMap.SetArray("x", {0.0, 0.0, 0.0}, 3);
+		smMap.SetArray("y", {0.0, 0.0, 0.0}, 3);
+
+		smMap.SetValue("id", -1);
+		smMap.SetValue("mid", -1);
+		smMap.SetValue("type", -1);
+		smMap.SetValue("group", -1);
+
+		return view_as<Zone>(smMap);
+	}
+
+	public void Clear() {
+		this.SetArray("x", {0.0, 0.0, 0.0}, 3);
+		this.SetArray("y", {0.0, 0.0, 0.0}, 3);
+
+		this.SetValue("id", -1);
+		this.SetValue("mid", -1);
+		this.SetValue("type", -1);
+		this.SetValue("group", -1);
+	}
 
 	public void SetX(const float[] fX) {
 		this.SetArray("x", fX, 3);
@@ -138,6 +159,58 @@ methodmap Zone < StringMap {
 
 	public void GetY(float[] fY) {
 		this.GetArray("y", fY, 3);
+	}
+
+	property int Id {
+		public get() {
+			int iId;
+			this.GetValue("id", iId);
+
+			return iId;
+		}
+
+		public set(int iId) {
+			this.SetValue("id", iId);
+		}
+	}
+
+	property int Mid {
+		public get() {
+			int iMid;
+			this.GetValue("mid", iMid);
+
+			return iMid;
+		}
+
+		public set(int iMid) {
+			this.SetValue("mid", iMid);
+		}
+	}
+
+	property int Type {
+		public get() {
+			int iType;
+			this.GetValue("type", iType);
+
+			return iType;
+		}
+
+		public set(int iType) {
+			this.SetValue("type", iType);
+		}
+	}
+
+	property int Group {
+		public get() {
+			int iGroup;
+			this.GetValue("group", iGroup);
+
+			return iGroup;
+		}
+
+		public set(int iGroup) {
+			this.SetValue("group", iGroup);
+		}
 	}
 }
 
@@ -160,7 +233,7 @@ methodmap Player < StringMap {
 		Zone zZone;
 
 		if (this.GetValue("admin", aAdmin)) { aAdmin.Clear(); }
-		if (this.GetValue("zone", zZone)) { delete zZone; }
+		if (this.GetValue("zone", zZone)) { zZone.Clear(); }
 	}
 
 	property Admin Admin {
@@ -274,19 +347,81 @@ methodmap Players < ArrayList {
 	}
 }
 
+methodmap Models < StringMap {
+	public Models() {
+		StringMap smMap = new StringMap();
+
+		smMap.SetValue("blueglow", PrecacheModel("sprites/blueglow1.vmt"));
+		smMap.SetValue("redglow", PrecacheModel("sprites/purpleglow1.vmt"));
+		smMap.SetValue("laser", PrecacheModel("materials/sprites/laserbeam.vmt"));
+		smMap.SetValue("glow", PrecacheModel("materials/sprites/glow01.vmt"));
+
+		return view_as<Models>(smMap);
+	}
+
+	property int BlueGlow {
+		public get() {
+			int iIndex;
+			this.GetValue("blueglow", iIndex);
+
+			return iIndex;
+		}
+	}
+
+	property int RedGlow {
+		public get() {
+			int iIndex;
+			this.GetValue("redglow", iIndex);
+
+			return iIndex;
+		}
+	}
+
+	property int Laser {
+		public get() {
+			int iIndex;
+			this.GetValue("laser", iIndex);
+
+			return iIndex;
+		}
+	}
+
+	property int Glow {
+		public get() {
+			int iIndex;
+			this.GetValue("glow", iIndex);
+
+			return iIndex;
+		}
+	}
+}
+
 methodmap Global < StringMap {
-	public Global() { return view_as<Global>(new StringMap()); }
+	public Global() {
+		StringMap smMap = new StringMap();
+		Models mModels = new Models();
+		Players pPlayers = new Players();
+
+		smMap.SetValue("models", mModels);
+
+		pPlayers.Init();
+		smMap.SetValue("players", pPlayers);
+		return view_as<Global>(smMap);
+	}
 
 	public void Clear() {
 		Handle hTimer;
 		Players pPlayers;
+		Zones zZones;
 
 		this.GetValue("timer", view_as<Handle>(hTimer));
 		delete hTimer;
 
 		this.GetValue("players", view_as<Players>(pPlayers));
 		pPlayers.Clear();
-		delete pPlayers;
+
+		this.GetValue("zones", view_as<Zones>(zZones));
+		zZones.Clear();
 	}
 
 	property Handle Timer {
@@ -299,6 +434,19 @@ methodmap Global < StringMap {
 
 		public set(Handle hTimer) {
 			this.SetValue("timer", hTimer);
+		}
+	}
+
+	property Models Models {
+		public get() {
+			Models mModels;
+			this.GetValue("models", view_as<Models>(mModels));
+
+			return mModels;
+		}
+
+		public set(Models mModels) {
+			this.SetValue("models", mModels);
 		}
 	}
 

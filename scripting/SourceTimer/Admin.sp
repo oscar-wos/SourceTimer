@@ -52,12 +52,12 @@ void Admin_Zone(int iClient) {
 	mMenu.AddItem("", "", ITEMDRAW_SPACER);
 
 	Format(cBuffer, 512, "%t", "menu_addzone");
-	mMenu.AddItem("", cBuffer);
-
-	Format(cBuffer, 512, "%t", "menu_delzone");
-	mMenu.AddItem("", cBuffer, ITEMDRAW_DISABLED);
+	mMenu.AddItem("", cBuffer, Misc_CheckPlayer(iClient, PLAYER_ALIVE) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
 
 	Format(cBuffer, 512, "%t", "menu_editzone");
+	mMenu.AddItem("", cBuffer, ITEMDRAW_DISABLED);
+
+	Format(cBuffer, 512, "%t", "menu_delzone");
 	mMenu.AddItem("", cBuffer, ITEMDRAW_DISABLED);
 
 	mMenu.Display(iClient, 0);
@@ -71,11 +71,9 @@ public int Menu_Zone(Menu mMenu, MenuAction maAction, int iParam1, int iParam2) 
 				g_Global.Players.SetAdminOption(iParam1, 0);
 
 				Admin_AddZone(iParam1);
-			} case 2: {
-
-			} case 3: {
-
 			}
+			case 2: { }
+			case 3: { }
 		}
 	} else if (maAction == MenuAction_Cancel) {
 		if (iParam2 == MenuCancel_ExitBack) Admin_Menu(iParam1);
@@ -127,6 +125,8 @@ void Admin_AddZone(int iClient) {
 				}
 			}
 		} case 1: {
+
+		} case 2: {
 			Format(cBuffer, 512, "%s (%s) - %t - %t", PLUGIN_NAME, PLUGIN_VERSION, "menu_zone", "menu_addzone_editp1");
 			mMenu.SetTitle(cBuffer);
 
@@ -138,7 +138,7 @@ void Admin_AddZone(int iClient) {
 
 			Format(cBuffer, 512, "%t", "menu_addzone_editz");
 			mMenu.AddItem("", cBuffer, (g_Global.Players.GetAdminOption(iClient) != 2) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
-		} case 2: {
+		} case 3: {
 			Format(cBuffer, 512, "%s (%s) - %t - %t", PLUGIN_NAME, PLUGIN_VERSION, "menu_zone", "menu_addzone_editp2");
 			mMenu.SetTitle(cBuffer);
 
@@ -165,21 +165,14 @@ public int Menu_AddZone(Menu mMenu, MenuAction maAction, int iParam1, int iParam
 
 		if (fX[2] == fY[2]) { fY[2] += BOX_BOUNDRY; g_Global.Players.SetAdminZoneY(iParam1, fY); }
 		switch (g_Global.Players.GetAdminSetting(iParam1)) {
-			case 0: { // Add Zone (Default)
+			case 0: {
 				switch (iParam2) {
-					case 1: { // Save Region
-						// Admin_SaveZone()...
-					} case 3: { // Edit Region (X)
-						g_Global.Players.SetAdminSetting(iParam1, 1);
-					} case 4: { // Edit Region (Y)
-						g_Global.Players.SetAdminSetting(iParam1, 2);
-					}
+					case 1: { g_Global.Players.SetAdminSetting(iParam1, 1); }
+					case 3: { g_Global.Players.SetAdminSetting(iParam1, 2); }
+					case 4: { g_Global.Players.SetAdminSetting(iParam1, 3); }
 				}
-			} case 1: { // Precise Edit (P1)
-				g_Global.Players.SetAdminOption(iParam1, iParam2 - 1);
-			} case 2: { // Precise Edit (P2)
-				g_Global.Players.SetAdminOption(iParam1, iParam2 - 1);
-			}
+			} case 2: { g_Global.Players.SetAdminOption(iParam1, iParam2 - 1); }
+			case 3: { g_Global.Players.SetAdminOption(iParam1, iParam2 - 1); }
 		}
 
 		Admin_AddZone(iParam1);
@@ -189,9 +182,10 @@ public int Menu_AddZone(Menu mMenu, MenuAction maAction, int iParam1, int iParam
 		switch (iParam2) {
 			case MenuCancel_ExitBack: {
 				switch (g_Global.Players.GetAdminSetting(iParam1)) {
-					case 0: { g_Global.Players.SetAdminSetting(iParam1, -1); Admin_Zone(iParam1); }
+					case 0: { g_Global.Players.SetAdminSetting(iParam1, -1); g_Global.Players.SetAdminOption(iParam1, -1); Admin_Zone(iParam1); }
 					case 1: { g_Global.Players.SetAdminSetting(iParam1, 0); g_Global.Players.SetAdminOption(iParam1, 0); Admin_AddZone(iParam1); }
 					case 2: { g_Global.Players.SetAdminSetting(iParam1, 0); g_Global.Players.SetAdminOption(iParam1, 0); Admin_AddZone(iParam1); }
+					case 3: { g_Global.Players.SetAdminSetting(iParam1, 0); g_Global.Players.SetAdminOption(iParam1, 0); Admin_AddZone(iParam1); }
 				}
 			} case MenuCancel_Exit: { ClearAdminData(iParam1); }
 		}
@@ -214,42 +208,30 @@ void Timer_Admin() {
 
 		if (xPos[0] != 0.0 && yPos[0] != 0.0) {
 			if (xPos[2] == yPos[2]) { yPos[2] += BOX_BOUNDRY; }
-			TE_SetupGlowSprite(xPos, gH_Models[PurpleGlowSprite], 0.1, 0.5, 125);
-			TE_SendToClient(i);
-			TE_SetupGlowSprite(yPos, gH_Models[BlueGlowSprite], 0.1, 0.5, 125);
-			TE_SendToClient(i);
+			Zone_DrawSprite(xPos, 0, 0.5, false, i);
+			Zone_DrawSprite(yPos, 1, 0.5, false, i);
 		}
 
 		switch (pPlayer.Admin.Setting) {
 			case 0: {
-				float fEye[3], fAngle[3], fPos[3];
-
-				GetClientEyePosition(i, fEye);
-				GetClientEyeAngles(i, fAngle);
-
-				TR_TraceRayFilter(fEye, fAngle, MASK_SOLID, RayType_Infinite, Filter_HitSelf, i);
-				if (TR_DidHit()) TR_GetEndPosition(fPos);
+				float fPos[3];
+				Zone_RayTrace(i, fPos);
 
 				if (xPos[0] != 0.0 && yPos[0] != 0.0) {
 					if (xPos[2] == yPos[2]) { yPos[2] += BOX_BOUNDRY; }
-					Zone_Draw(i, xPos, yPos, 7, 0.1, true);
+					Zone_Draw(i, xPos, yPos, 4, true);
 				} else if (xPos[0] != 0.0) {
 					if (fPos[2] == xPos[2]) { fPos[2] += BOX_BOUNDRY; }
-					Zone_Draw(i, xPos, fPos, 6, 0.1, false);
+					Zone_Draw(i, xPos, fPos, 3, true);
 				} else if (yPos[0] != 0.0) {
 					if (fPos[2] == yPos[2]) { fPos[2] += BOX_BOUNDRY; }
-					Zone_Draw(i, fPos, yPos, 6, 0.1, false);
+					Zone_Draw(i, fPos, yPos, 3, true);
 				} else {
-					TE_SetupGlowSprite(fPos, gH_Models[BlueGlowSprite], 0.1, 0.1, 249);
-					TE_SendToClient(i);
+					Zone_DrawSprite(fPos, 0, 0.1, false, i);
 				}
-			} case 1: {
-				// Zone_Draw(i, xPos, yPos, 7, 0.1, true);
-				Zone_AdminDraw(i, xPos);
-			} case 2: {
-				// Zone_Draw(i, xPos, yPos, 7, 0.1, true);
-				Zone_AdminDraw(i, yPos);
-			}
+			} case 1: { Zone_Draw(i, xPos, yPos, 0, true); }
+			case 2: { Zone_DrawAdmin(i, xPos); }
+			case 3: { Zone_DrawAdmin(i, yPos); }
 		}
 	}
 }
@@ -262,9 +244,4 @@ void ClearAdminData(int iClient) {
 	pPlayer.Zone = new Zone();
 
 	g_Global.Players.Set(iClient, pPlayer);
-}
-
-bool Filter_HitSelf(int iEntity, int iMask, any aData) {
-	if (iEntity == aData) return false;
-	return true;
 }

@@ -1,19 +1,8 @@
-void Zone_Draw(int iClient, float fX[3], float fY[3], int iColor, float fDisplay, bool bAll) {
+void Zone_Draw(int iClient, float fX[3], float fY[3], int iColor, bool bAll) {
 	float fPoints[8][3];
-	int iColors[4];
-
-	LineColor(iColor, iColors);
 
 	fPoints[0] = fX;
 	fPoints[7] = fY;
-
-	/* TO DO MATH
-	for (int x = 0; x < 2; x++) {
-		for (int y = 0; y < 3; y++) {
-			fPoints[]
-		}
-	}
-	*/
 
 	fPoints[1][0] = fPoints[0][0];
 	fPoints[1][1] = fPoints[7][1];
@@ -39,98 +28,49 @@ void Zone_Draw(int iClient, float fX[3], float fY[3], int iColor, float fDisplay
 	fPoints[6][1] = fPoints[0][1];
 	fPoints[6][2] = fPoints[7][2];
 
-	for (int i = 0; i < 4; i++) {
-		TE_SetupBeamPoints(fPoints[i], fPoints[i + 4], gH_Models[LaserMaterial], gH_Models[HaloMaterial], 0, 30, fDisplay, 2.0, 5.0, 2, 1.0, iColors, 0);
-
-		if (bAll) {
-			TE_SendToAll();
-		} else {
-			TE_SendToClient(iClient);
-		}
-	}
-
-	for (int i = 0; i < 2; i++) {
-		TE_SetupBeamPoints(fPoints[0], fPoints[i + 1], gH_Models[LaserMaterial], gH_Models[HaloMaterial], 0, 30, fDisplay, 2.0, 5.0, 2, 1.0, iColors, 0);
-
-		if (bAll) {
-			TE_SendToAll();
-		} else {
-			TE_SendToClient(iClient);
-		}
-	}
-
-	for (int i = 0; i < 2; i++) {
-		TE_SetupBeamPoints(fPoints[3], fPoints[i + 1], gH_Models[LaserMaterial], gH_Models[HaloMaterial], 0, 30, fDisplay, 2.0, 5.0, 2, 1.0, iColors, 0);
-
-		if (bAll) {
-			TE_SendToAll();
-		} else {
-			TE_SendToClient(iClient);
-		}
-	}
-
-	for (int i = 0; i < 2; i++) {
-		TE_SetupBeamPoints(fPoints[4], fPoints[i + 5], gH_Models[LaserMaterial], gH_Models[HaloMaterial], 0, 30, fDisplay, 2.0, 5.0, 2, 1.0, iColors, 0);
-
-		if (bAll) {
-			TE_SendToAll();
-		} else {
-			TE_SendToClient(iClient);
-		}
-	}
-
-	for (int i = 0; i < 2; i++) {
-		TE_SetupBeamPoints(fPoints[7], fPoints[i + 5], gH_Models[LaserMaterial], gH_Models[HaloMaterial], 0, 30, fDisplay, 2.0, 5.0, 2, 1.0, iColors, 0);
-
-		if (bAll) {
-			TE_SendToAll();
-		} else {
-			TE_SendToClient(iClient);
-		}
-	}
+	for (int i = 0; i < 4; i++) { Zone_DrawLine(fPoints[i], fPoints[i + 4], C_Colors[iColor], bAll, iClient); }
+	for (int i = 0; i < 2; i++) { Zone_DrawLine(fPoints[0], fPoints[i + 1], C_Colors[iColor], bAll, iClient); }
+	for (int i = 0; i < 2; i++) { Zone_DrawLine(fPoints[3], fPoints[i + 1], C_Colors[iColor], bAll, iClient); }
+	for (int i = 0; i < 2; i++) { Zone_DrawLine(fPoints[4], fPoints[i + 5], C_Colors[iColor], bAll, iClient); }
+	for (int i = 0; i < 2; i++) { Zone_DrawLine(fPoints[7], fPoints[i + 5], C_Colors[iColor], bAll, iClient); }
 }
 
-void Zone_AdminDraw(int iClient, float xPos[3]) {
+void Zone_DrawAdmin(int iClient, float xPos[3]) {
 	float yPos[3];
-	int iColors[4];
 
 	for (int i = 0; i < 3; i++) {
-		for (int a = 0; a < 3; a++) {
-			yPos[a] = xPos[a];
-		}
+		for (int k = 0; k < 3; k++) { yPos[k] = xPos[k]; }
 
-		yPos[i] += 100.0;
-		LineColor(8 + i, iColors);
-
-		TE_SetupBeamPoints(xPos, yPos, gH_Models[LaserMaterial], gH_Models[HaloMaterial], 0, 30, 0.1, 2.0, 10.0, 2, 1.0, iColors, 0);
-		TE_SendToClient(iClient);
+		yPos[i] += 66.6;
+		Zone_DrawLine(xPos, yPos, C_Colors[i], false, iClient)
 	}
 }
 
-void LineColor(int iColor, int iColors[4]) {
-	switch (iColor) {
-		case 0: { //N Start
-			iColors = { 0, 255, 0, 255 };
-		} case 1: { //N End
-			iColors = { 255, 0, 0, 255 };
-		} case 2: { //N CP
-			iColors = { 255, 165, 0, 255 };
-		} case 3: { //B Start
-			iColors = { 23, 150, 102, 255 };
-		} case 4: { //B End
-			iColors = { 153, 0, 153, 255 };
-		} case 5: { //B CP
-			iColors = { 200, 100, 0, 255 };
-		} case 6: { //Admin Zoning
-			iColors = { 255, 255, 102, 255 };
-		} case 7: { // Admin Zoning 2
-			iColors = { 0, 255, 102, 255 };
-		} case 8: { // Red
-			iColors = { 255, 0, 0, 255 };
-		} case 9: { // Green
-			iColors = { 0, 255, 0, 255 };
-		} case 10: { // Blue
-			iColors = { 0, 0, 255, 255 };
-		}
-	}
+void Zone_RayTrace(int iClient, float fPos[3]) {
+	float fEye[3], fAngle[3];
+	GetClientEyePosition(iClient, fEye);
+	GetClientEyeAngles(iClient, fAngle);
+
+	TR_TraceRayFilter(fEye, fAngle, MASK_SOLID, RayType_Infinite, Filter_HitSelf, iClient);
+	if (TR_DidHit()) TR_GetEndPosition(fPos);
+}
+
+void Zone_DrawSprite(float fPos[3], int iModel, float fSize, bool bAll, int iClient = 0) {
+	if (iModel == 0) { TE_SetupGlowSprite(fPos, g_Global.Models.BlueGlow, TIMER_INTERVAL, fSize, 249); }
+	else { TE_SetupGlowSprite(fPos, g_Global.Models.RedGlow, TIMER_INTERVAL, fSize, 249); }
+
+	if (bAll) { TE_SendToAll(); }
+	else { TE_SendToClient(iClient); }
+}
+
+void Zone_DrawLine(float xPos[3], float yPos[3], int iColor[4], bool bAll, int iClient = 0) {
+	TE_SetupBeamPoints(xPos, yPos, g_Global.Models.Laser, g_Global.Models.Glow, 0, 1, TIMER_INTERVAL, 1.0, 1.0, 1, 1.0, iColor, 1);
+
+	if (bAll) { TE_SendToAll(); }
+	else { TE_SendToClient(iClient); }
+}
+
+bool Filter_HitSelf(int iEntity, int iMask, any aData) {
+	if (iEntity == aData) return false;
+	return true;
 }

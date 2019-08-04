@@ -22,16 +22,18 @@
 #define TEXT_HIGHLIGHT "{lightred}"
 #define TEXT_PREFIX "[{blue}Timer{white}] "
 #define BOX_BOUNDRY 120.0
+#define TIMER_INTERVAL 0.1
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.01"
+#define PLUGIN_VERSION "0.02"
 
 #include <sourcemod>
 #include <sdktools>
 #include <csgocolors>
 #include <sourcetimer>
 
-#include "SourceTimer/Variable.sp"
+Global g_Global;
+
 #include "SourceTimer/Admin.sp"
 #include "SourceTimer/Misc.sp"
 #include "SourceTimer/Zone.sp"
@@ -41,7 +43,7 @@ public Plugin myinfo = {
 	author = "Oscar Wos (OSWO)",
 	description = "A timer used for recording player times on skill based maps",
 	version = PLUGIN_VERSION,
-	url = "https://steamcommunity.com/id/OSWO",
+	url = "https://github.com/OSCAR-WOS/SourceTimer / https://steamcommunity.com/id/OSWO",
 }
 
 public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] cError, int iError) {
@@ -50,35 +52,22 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] cError, int iErr
 
 public void OnPluginStart() {
 	g_Global = new Global();
-
-	g_Global.Players = new Players();
-	g_Global.Players.Init();
-
-	g_Global.Timer = CreateTimer(0.1, Timer_Global, _, TIMER_REPEAT);
+	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT);
 
 	ServerCommand("sm_reload_translations");
 	LoadTranslations("sourcetimer.phrases");
 
-	RegConsoleCmd("sm_timer", Command_Admin);
+	RegConsoleCmd("sm_admin", Command_Admin);
 	RegConsoleCmd("sm_zone", Command_Zone);
 	RegConsoleCmd("sm_addzone", Command_AddZone);
-
-	/*
-	RegAdminCmd("sm_timer", Command_Admin, ADMFLAG_RCON, "");
-	RegAdminCmd("sm_zone", Command_Zone, ADMFLAG_RCON, "");
-	RegAdminCmd("sm_addzone", Command_AddZone, ADMFLAG_RCON, "");
-	*/
-
-	// RegAdminCmd("sm_editzone", Command_EditZone, ADMFLAG_RCON, "");
-	// RegAdminCmd("sm_delzones", Command_DelZones, ADMFLAG_RCON, "");
 }
 
 public void OnMapStart() {
-	Misc_PrecacheModels();
+	g_Global.Models = new Models();
 }
 
 public void OnClientPostAdminCheck(int iClient) {
-	g_Global.Players.InitClient(iClient);
+	g_Global.Players.ClearClient(iClient);
 }
 
 public void OnClientDisconnect(int iClient) {
@@ -113,13 +102,13 @@ public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fV
 					Admin_AddZone(iClient);
 				}
 			}
-		} case 1: {
+		} case 2: {
 			float fValue = 0.1;
 
 			if (iButtons & IN_ATTACK2) { fValue *= -1; }
 			xPos[pPlayer.Admin.Option] += fValue;
 			g_Global.Players.SetAdminZoneX(iClient, xPos);
-		} case 2: {
+		} case 3: {
 			float fValue = 0.1;
 
 			if (iButtons & IN_ATTACK2) { fValue *= -1; }
