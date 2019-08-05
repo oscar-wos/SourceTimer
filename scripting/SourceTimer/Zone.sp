@@ -71,24 +71,102 @@ void Zone_DrawLine(float xPos[3], float yPos[3], int iColor[4], float fDisplay, 
 }
 
 void Zone_SaveZone(int iClient) {
-	Zone zZone = g_Global.Players.GetZone(iClient);
+	Player pPlayer = g_Global.Players.Get(iClient);
 	float xPos[3], yPos[3];
 
-	zZone.GetX(xPos);
-	zZone.GetY(yPos);
+	pPlayer.Admin.Zone.GetX(xPos);
+	pPlayer.Admin.Zone.GetY(yPos);
 
-	Zone_NewZone(xPos, yPos, zZone.Type, zZone.Group);
-	g_Global.Players.ClearAdmin(iClient);
+	Zone_NewZone(xPos, yPos, pPlayer.Admin.Zone.Type, pPlayer.Admin.Zone.Group);
 }
 
 void Zone_NewZone(float xPos[3], float yPos[3], int iType, int iGroup) {
 	Zone zZone = new Zone();
+
 	zZone.SetX(xPos);
 	zZone.SetY(yPos);
 	zZone.Type = iType;
 	zZone.Group = iGroup;
+	zZone.Entity = CreateEntityByName("trigger_multiple");
+
+	if (zZone.Entity > 0 && IsValidEntity(zZone.Entity)) {
+		char[] cBuffer = new char[512];
+		SetEntityModel(zZone.Entity, "models/error.mdl");
+
+		Format(cBuffer, 512, "%i: timer_zone", g_Global.Zones.Length);
+		DispatchKeyValue(zZone.Entity, "targetname", cBuffer);
+		DispatchKeyValue(zZone.Entity, "spawnflags", "257");
+		DispatchKeyValue(zZone.Entity, "StartDisabled", "0");
+
+		if (DispatchSpawn(zZone.Entity)) {
+			float fMid[3], fVecMin[3], fVecMax[3];
+			ActivateEntity(zZone.Entity);
+
+			g_Global.Zones.CalculateCentre(xPos, yPos, fMid);
+			MakeVectorFromPoints(fMid, xPos, fVecMin);
+			MakeVectorFromPoints(yPos, fMid, fVecMax);
+
+			for (int i = 0; i < 3; i++) {
+				if (fVecMin[i] > 0.0) { fVecMin[i] *= -1; }
+				else if (fVecMax[i] < 0.0) { fVecMax[i] *= -1; }
+			}
+
+			SetEntPropVector(zZone.Entity, Prop_Send, "m_vecMins", fVecMin);
+			SetEntPropVector(zZone.Entity, Prop_Send, "m_vecMaxs", fVecMax);
+
+			SetEntProp(zZone.Entity, Prop_Send, "m_nSolidType", 2);
+			TeleportEntity(zZone.Entity, fMid, NULL_VECTOR, NULL_VECTOR);
+
+			SDKHook(zZone.Entity, SDKHook_StartTouch, Entity_StartTouch);
+			SDKHook(zZone.Entity, SDKHook_EndTouch, Entity_EndTouch);
+		}
+	}
 
 	g_Global.Zones.Push(zZone);
+}
+
+public Action Entity_StartTouch(int iCaller, int iActivator) {
+	if (!Misc_CheckPlayer(iActivator, PLAYER_INGAME)) { return; }
+	char[] cEntityName = new char[512];
+	char[] cEntityIndex = new char[16];
+	int iIndex;
+
+	GetEntPropString(iCaller, Prop_Send, "m_iName", cEntityName, 512);
+	SplitString(cEntityName, ":", cEntityIndex, 16);
+	iIndex = StringToInt(cEntityIndex);
+
+	Player pPlayer = g_Global.Players.Get(iActivator);
+	Zone zZone = g_Global.Zones.Get(iIndex);
+
+	pPlayer.ZoneType = zZone.Type;
+
+	switch (zZone.Type) {
+		case 0: { }
+		case 1: { }
+		case 2: { }
+	}
+}
+
+public Action Entity_EndTouch(int iCaller, int iActivator) {
+	if (!Misc_CheckPlayer(iActivator, PLAYER_INGAME)) { return; }
+	char[] cEntityName = new char[512];
+	char[] cEntityIndex = new char[16];
+	int iIndex;
+
+	GetEntPropString(iCaller, Prop_Send, "m_iName", cEntityName, 512);
+	SplitString(cEntityName, ":", cEntityIndex, 16);
+	iIndex = StringToInt(cEntityIndex);
+
+	Player pPlayer = g_Global.Players.Get(iActivator);
+	Zone zZone = g_Global.Zones.Get(iIndex);
+
+	PrintToChatAll("%i: end: %i", iActivator, pPlayer.ZoneType);
+
+	switch (zZone.Type) {
+		case 0: { }
+		case 1: { }
+		case 2: { }
+	}
 }
 
 void Timer_Zone() {
@@ -99,7 +177,10 @@ void Timer_Zone() {
 		zZone.GetX(xPos);
 		zZone.GetY(yPos);
 
-		Zone_Draw(xPos, yPos, 2, TIMER_INTERVAL + (g_Global.Zones.Length / TIMER_ZONES) * TIMER_INTERVAL, true);
+		int iColor = zZone.Type + 5;
+		if (zZone.Group > 0) { iColor += 3; }
+
+		Zone_Draw(xPos, yPos, iColor, TIMER_INTERVAL + (g_Global.Zones.Length / TIMER_ZONES) * TIMER_INTERVAL, true);
 		g_Global.RenderedZone++;
 	}
 

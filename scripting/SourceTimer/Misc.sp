@@ -15,3 +15,11 @@ bool Misc_CheckPlayer(int iClient, int iType, bool bMessage = false) {
 
 	return true;
 }
+
+int Misc_CalculateZoneType(int iType) {
+	return iType % ZONES_TOTAL;
+}
+
+int Misc_CalculateZoneGroup(int iGroup) {
+	return iGroup % g_Global.ZoneGroups;
+}

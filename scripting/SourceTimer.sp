@@ -26,9 +26,10 @@
 #define TIMER_ZONES 16
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.04"
+#define PLUGIN_VERSION "0.05"
 
 #include <sourcemod>
+#include <sdkhooks>
 #include <sdktools>
 #include <sourcetimer>
 
@@ -71,18 +72,19 @@ public void OnClientPostAdminCheck(int iClient) {
 }
 
 public void OnClientDisconnect(int iClient) {
-	g_Global.Players.Clear(iClient);
+	Player pPlayer = g_Global.Players.Get(iClient);
+	pPlayer.Clear();
 }
 
 public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
-	Player pPlayer = view_as<Player>(g_Global.Players.Get(iClient));
+	Player pPlayer = g_Global.Players.Get(iClient);
 	if (pPlayer.Admin.Setting == -1) return;
 	if (!((iButtons & IN_ATTACK) || (iButtons & IN_ATTACK2))) return;
 
 	float xPos[3], yPos[3];
 
-	pPlayer.Zone.GetX(xPos);
-	pPlayer.Zone.GetY(yPos);
+	pPlayer.Admin.Zone.GetX(xPos);
+	pPlayer.Admin.Zone.GetY(yPos);
 
 	switch (pPlayer.Admin.Setting) {
 		case 0: {
@@ -91,8 +93,8 @@ public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fV
 					float fPos[3];
 					Zone_RayTrace(iClient, fPos);
 
-					if (iButtons & IN_ATTACK) { g_Global.Players.SetAdminZoneX(iClient, fPos); }
-					else { g_Global.Players.SetAdminZoneY(iClient, fPos); }
+					if (iButtons & IN_ATTACK) { pPlayer.Admin.Zone.SetX(fPos); }
+					else { pPlayer.Admin.Zone.SetY(fPos); }
 
 					Admin_AddZone(iClient);
 				}
@@ -102,13 +104,13 @@ public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fV
 
 			if (iButtons & IN_ATTACK2) { fValue *= -1; }
 			xPos[pPlayer.Admin.Option] += fValue;
-			g_Global.Players.SetAdminZoneX(iClient, xPos);
+			pPlayer.Admin.Zone.SetX(xPos);
 		} case 3: {
 			float fValue = 0.1;
 
 			if (iButtons & IN_ATTACK2) { fValue *= -1; }
 			yPos[pPlayer.Admin.Option] += fValue;
-			g_Global.Players.SetAdminZoneY(iClient, yPos);
+			pPlayer.Admin.Zone.SetY(yPos);
 		}
 	}
 }
