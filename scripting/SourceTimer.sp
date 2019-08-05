@@ -23,13 +23,13 @@
 #define TEXT_PREFIX "[{blue}Timer{white}] "
 #define BOX_BOUNDRY 120.0
 #define TIMER_INTERVAL 0.1
+#define TIMER_ZONES 16
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.03"
+#define PLUGIN_VERSION "0.04"
 
 #include <sourcemod>
 #include <sdktools>
-#include <csgocolors>
 #include <sourcetimer>
 
 Global g_Global;
@@ -114,5 +114,6 @@ public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fV
 }
 
 public Action Timer_Global(Handle hTimer) {
+	Timer_Zone();
 	Timer_Admin();
 }

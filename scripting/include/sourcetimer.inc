@@ -7,6 +7,8 @@
 #define COLORS_MAX 19
 
 // csgocolors.inc - Author: exvel, Editor: Popoklopsi, Powerlord, Zipcore, Bara
+#define MAX_MESSAGE_LENGTH 250
+
 char C_Tags[][] = {
 	"{default}",
 	"{white}",
@@ -426,6 +428,7 @@ methodmap Global < StringMap {
 		smMap.SetValue("players", new Players());
 		smMap.SetValue("zones", new Zones());
 		smMap.SetValue("zonegroups", 1);
+		smMap.SetValue("renderedzone", 0);
 
 		return view_as<Global>(smMap);
 	}
@@ -503,6 +506,19 @@ methodmap Global < StringMap {
 
 		public set(int iZoneGroups) {
 			this.SetValue("zonegroups", iZoneGroups);
+		}
+	}
+
+	property int RenderedZone {
+		public get() {
+			int iRenderedZone;
+			this.GetValue("renderedzone", iRenderedZone);
+
+			return iRenderedZone;
+		}
+
+		public set(int iRenderedZone) {
+			this.SetValue("renderedzone", iRenderedZone);
 		}
 	}
 }

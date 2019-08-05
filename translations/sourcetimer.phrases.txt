@@ -3,7 +3,7 @@
 
 	"menu_zone"
 	{
-		"en"		"Zone Menu"
+		"en"		"Zoning"
 	}
 
 	"menu_addzone"
@@ -18,12 +18,12 @@
 
 	"menu_addzone_editp1"
 	{
-		"en"		"Precise Edit (P1 - Purple)"
+		"en"		"Precise Edit (P1 - Blue)"
 	}
 
 	"menu_addzone_editp2"
 	{
-		"en"		"Precise Edit (P2 - Blue)"
+		"en"		"Precise Edit (P2 - Red)"
 	}
 
 	"menu_addzone_editx"
@@ -41,14 +41,54 @@
 		"en"		"Edit (Z - Blue)"
 	}
 
-	"menu_delzone"
+	"menu_addzone_type"
 	{
-		"en"		"Delete Zone"
+		"en"		"Type"
+	}
+
+	"menu_addzone_checkpoint"
+	{
+		"en"		"Checkpoint"
+	}
+
+	"menu_addzone_start"
+	{
+		"en"		"Start"
+	}
+
+	"menu_addzone_end"
+	{
+		"en"		"End"
+	}
+
+	"menu_addzone_group"
+	{
+		"en"		"Group"
+	}
+
+	"menu_addzone_normal"
+	{
+		"en"		"Normal"
+	}
+
+	"menu_addzone_bonus"
+	{
+		"en"		"Bonus"
+	}
+
+	"menu_addzone_bonusnew"
+	{
+		"en"		"New Bonus"
 	}
 
 	"menu_editzone"
 	{
 		"en"		"Edit Zone"
+	}
+
+	"menu_delzone"
+	{
+		"en"		"Delete Zone"
 	}
 
 	"check_ingame"
