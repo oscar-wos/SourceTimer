@@ -113,23 +113,20 @@ void Admin_AddZone(int iClient) {
 
 	switch (pPlayer.Admin.Setting) {
 		case 0: {
-			switch (pPlayer.Admin.Option) {
-				case 0: {
-					Format(cBuffer, 512, "%s (%s) - %t - %t", PLUGIN_NAME, PLUGIN_VERSION, "menu_zone", "menu_addzone");
-					mMenu.SetTitle(cBuffer);
+			Format(cBuffer, 512, "%s (%s) - %t - %t", PLUGIN_NAME, PLUGIN_VERSION, "menu_zone", "menu_addzone");
+			mMenu.SetTitle(cBuffer);
 
-					Format(cBuffer, 512, "%t", "menu_addzone_editp1");
-					mMenu.AddItem("", cBuffer, xPos[0] != 0.0 ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+			Format(cBuffer, 512, "%t", "menu_addzone_editp1");
+			mMenu.AddItem("", cBuffer, xPos[0] != 0.0 ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
 
-					Format(cBuffer, 512, "%t", "menu_addzone_editp2");
-					mMenu.AddItem("", cBuffer, yPos[0] != 0.0 ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+			Format(cBuffer, 512, "%t", "menu_addzone_editp2");
+			mMenu.AddItem("", cBuffer, yPos[0] != 0.0 ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
 
-					mMenu.AddItem("", "", ITEMDRAW_SPACER);
+			mMenu.AddItem("", "", ITEMDRAW_SPACER);
 
-					Format(cBuffer, 512, "%t", "menu_addzone_saveregion");
-					mMenu.AddItem("", cBuffer, (xPos[0] != 0.0 && yPos[0] != 0.0) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
-				}
-			}
+			Format(cBuffer, 512, "%t", "menu_addzone_saveregion");
+			mMenu.AddItem("", cBuffer, (xPos[0] != 0.0 && yPos[0] != 0.0) ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+
 		} case 1: {
 			Format(cBuffer, 512, "%s (%s) - %t - %t", PLUGIN_NAME, PLUGIN_VERSION, "menu_zone", "menu_addzone_saveregion");
 			mMenu.SetTitle(cBuffer);
@@ -206,7 +203,7 @@ public int Menu_AddZone(Menu mMenu, MenuAction maAction, int iParam1, int iParam
 		if (iParam2 == MenuCancel_ExitBack) {
 			switch (pPlayer.Admin.Setting) {
 				case 0: { pPlayer.Admin.Setting = -1; pPlayer.Admin.Option = -1; Admin_Zone(iParam1); }
-				case 1, 2, 3: { pPlayer.Admin.Setting = 0; Admin_AddZone(iParam1);}
+				case 1, 2, 3: { pPlayer.Admin.Setting = 0; pPlayer.Admin.Option = 0; Admin_AddZone(iParam1);}
 			}
 		} else if (iParam2 == MenuCancel_Exit) { pPlayer.Admin.Clear(); }
 	}

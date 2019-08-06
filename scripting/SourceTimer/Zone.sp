@@ -138,13 +138,14 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 	Player pPlayer = g_Global.Players.Get(iActivator);
 	Zone zZone = g_Global.Zones.Get(iIndex);
 
-	pPlayer.ZoneType = zZone.Type;
-
 	switch (zZone.Type) {
-		case 0: { }
-		case 1: { }
-		case 2: { }
+		case 0: { if (pPlayer.StartTime != -1.0) { PrintToChatAll("Player Checkpoint: %f", GetGameTime() - pPlayer.StartTime); } }
+		case 1: { pPlayer.StartTime = -1.0; }
+		case 2: { if (pPlayer.StartTime != -1.0) { PrintToChatAll("Player Finished: %f", GetGameTime() - pPlayer.StartTime); pPlayer.StartTime = -1.0; } }
 	}
+
+	pPlayer.ZoneType = zZone.Type;
+	pPlayer.ZoneGroup = zZone.Group;
 }
 
 public Action Entity_EndTouch(int iCaller, int iActivator) {
@@ -160,13 +161,14 @@ public Action Entity_EndTouch(int iCaller, int iActivator) {
 	Player pPlayer = g_Global.Players.Get(iActivator);
 	Zone zZone = g_Global.Zones.Get(iIndex);
 
-	PrintToChatAll("%i: end: %i", iActivator, pPlayer.ZoneType);
-
 	switch (zZone.Type) {
 		case 0: { }
-		case 1: { }
+		case 1: { pPlayer.StartTime = GetGameTime(); }
 		case 2: { }
 	}
+
+	pPlayer.ZoneType = -1;
+	pPlayer.ZoneGroup = zZone.Group;
 }
 
 void Timer_Zone() {

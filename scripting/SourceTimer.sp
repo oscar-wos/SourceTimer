@@ -26,17 +26,19 @@
 #define TIMER_ZONES 16
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.05"
+#define PLUGIN_VERSION "0.06"
 
 #include <sourcemod>
 #include <sdkhooks>
 #include <sdktools>
+#include <dbi>
 #include <sourcetimer>
 
 Global g_Global;
 
 #include "SourceTimer/Admin.sp"
 #include "SourceTimer/Misc.sp"
+#include "SourceTimer/Sql.sp"
 #include "SourceTimer/Zone.sp"
 
 public Plugin myinfo = {
@@ -54,6 +56,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] cError, int iErr
 public void OnPluginStart() {
 	g_Global = new Global();
 	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT);
+	// Database.Connect(T_Connect, "sourcetimer");
 
 	ServerCommand("sm_reload_translations");
 	LoadTranslations("sourcetimer.phrases");

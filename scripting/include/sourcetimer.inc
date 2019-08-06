@@ -89,6 +89,22 @@ void RemoveTags(char[] cMessage, int iLength) {
 	for (int i = 0; i < COLORS_MAX; i++) { ReplaceString(cMessage, iLength, C_TagCodes[i], ""); }
 }
 
+methodmap Checkpoints < ArrayList {
+	public Checkpoints() { return view_as<Checkpoints>(new ArrayList()); }
+}
+
+methodmap Record < StringMap {
+	public Record() {
+		StringMap smMap = new StringMap();
+		smMap.SetValue("checkpoints", new Checkpoints());
+
+		return view_as<Record>(smMap); }
+}
+
+methodmap Records < ArrayList {
+	public Records() { return view_as<Records>(new ArrayList()); }
+}
+
 methodmap Models < StringMap {
 	public Models() {
 		StringMap smMap = new StringMap();
@@ -296,7 +312,7 @@ methodmap Player < StringMap {
 		StringMap smMap = new StringMap();
 		smMap.SetValue("admin", new Admin());
 
-		smMap.SetValue("starttime", -1);
+		smMap.SetValue("starttime", -1.0);
 		smMap.SetValue("zonetype", -1);
 		smMap.SetValue("zonegroup", -1);
 
@@ -406,19 +422,47 @@ methodmap Global < StringMap {
 		smMap.SetValue("zonegroups", 1);
 		smMap.SetValue("renderedzone", 0);
 
+		smMap.SetValue("ismysql", 0);
+
 		return view_as<Global>(smMap);
 	}
 
 	property Handle Timer {
 		public get() {
 			Handle hTimer;
-			this.GetValue("timer", view_as<Handle>(hTimer));
+			this.GetValue("timer", hTimer);
 
 			return hTimer;
 		}
 
 		public set(Handle hTimer) {
 			this.SetValue("timer", hTimer);
+		}
+	}
+
+	property Database Storage {
+		public get() {
+			Database dStorage;
+			this.GetValue("storage", dStorage);
+
+			return dStorage;
+		}
+
+		public set(Database dStorage) {
+			this.SetValue("storage", dStorage);
+		}
+	}
+
+	property bool IsMySQL {
+		public get() {
+			bool bIsMySQL;
+			this.GetValue("ismysql", bIsMySQL);
+
+			return bIsMySQL;
+		}
+
+		public set(bool bIsMySQL) {
+			this.SetValue("ismysql", bIsMySQL);
 		}
 	}
 
