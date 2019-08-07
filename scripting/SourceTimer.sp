@@ -31,7 +31,6 @@
 #include <sourcemod>
 #include <sdkhooks>
 #include <sdktools>
-#include <dbi>
 #include <sourcetimer>
 
 Global g_Global;
@@ -64,6 +63,13 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_admin", Command_Admin);
 	RegConsoleCmd("sm_zone", Command_Zone);
 	RegConsoleCmd("sm_addzone", Command_AddZone);
+
+	for (int i = 1; i <= MaxClients; i++) {
+		g_Global.Players.Resize(i + 1);
+
+		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) continue;
+		g_Global.Players.Set(i, new Player());
+	}
 }
 
 public void OnMapStart() {
@@ -71,17 +77,19 @@ public void OnMapStart() {
 }
 
 public void OnClientPostAdminCheck(int iClient) {
-
+	g_Global.Players.Set(iClient, new Player());
 }
 
 public void OnClientDisconnect(int iClient) {
 	Player pPlayer = g_Global.Players.Get(iClient);
 	pPlayer.Clear();
+
+	delete pPlayer;
 }
 
 public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
 	Player pPlayer = g_Global.Players.Get(iClient);
-	if (pPlayer.Admin.Setting == -1) return;
+	if (!pPlayer.Admin) { return; }
 	if (!((iButtons & IN_ATTACK) || (iButtons & IN_ATTACK2))) return;
 
 	float xPos[3], yPos[3];

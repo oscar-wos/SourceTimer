@@ -102,7 +102,7 @@ void Zone_NewZone(float xPos[3], float yPos[3], int iType, int iGroup) {
 			float fMid[3], fVecMin[3], fVecMax[3];
 			ActivateEntity(zZone.Entity);
 
-			g_Global.Zones.CalculateCentre(xPos, yPos, fMid);
+			Misc_CalculateCentre(xPos, yPos, fMid);
 			MakeVectorFromPoints(fMid, xPos, fVecMin);
 			MakeVectorFromPoints(yPos, fMid, fVecMax);
 
@@ -139,9 +139,9 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 	Zone zZone = g_Global.Zones.Get(iIndex);
 
 	switch (zZone.Type) {
-		case 0: { if (pPlayer.StartTime != -1.0) { PrintToChatAll("Player Checkpoint: %f", GetGameTime() - pPlayer.StartTime); } }
-		case 1: { pPlayer.StartTime = -1.0; }
-		case 2: { if (pPlayer.StartTime != -1.0) { PrintToChatAll("Player Finished: %f", GetGameTime() - pPlayer.StartTime); pPlayer.StartTime = -1.0; } }
+		case 0: { if (pPlayer.Start != -1.0) { PrintToChatAll("Player Checkpoint: %f", GetGameTime() - pPlayer.Start); } }
+		case 1: { pPlayer.Start = -1.0; }
+		case 2: { if (pPlayer.Start != -1.0) { PrintToChatAll("Player Finished: %f", GetGameTime() - pPlayer.Start); pPlayer.Start = -1.0; } }
 	}
 
 	pPlayer.ZoneType = zZone.Type;
@@ -163,7 +163,7 @@ public Action Entity_EndTouch(int iCaller, int iActivator) {
 
 	switch (zZone.Type) {
 		case 0: { }
-		case 1: { pPlayer.StartTime = GetGameTime(); }
+		case 1: { pPlayer.Start = GetGameTime(); }
 		case 2: { }
 	}
 

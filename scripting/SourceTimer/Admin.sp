@@ -1,8 +1,6 @@
 public Action Command_Admin(int iClient, int iArgs) {
 	if (!Misc_CheckPlayer(iClient, PLAYER_INGAME, true)) { return Plugin_Handled; }
-	Player pPlayer = g_Global.Players.Get(iClient);
-	pPlayer.Admin.Clear();
-
+	
 	Admin_Menu(iClient);
 	return Plugin_Handled;
 }
@@ -26,6 +24,8 @@ public int Menu_Admin(Menu mMenu, MenuAction maAction, int iParam1, int iParam2)
 	if (maAction == MenuAction_Select) {
 		switch (iParam2) {
 			case 1: {
+				Player pPlayer = g_Global.Players.Get(iParam1);
+				pPlayer.Admin = new Admin();
 				Admin_Zone(iParam1);
 			}
 		}
@@ -37,7 +37,7 @@ public int Menu_Admin(Menu mMenu, MenuAction maAction, int iParam1, int iParam2)
 public Action Command_Zone(int iClient, int iArgs) {
 	if (!Misc_CheckPlayer(iClient, PLAYER_INGAME, true)) { return Plugin_Handled; }
 	Player pPlayer = g_Global.Players.Get(iClient);
-	pPlayer.Admin.Clear();
+	pPlayer.Admin = new Admin();
 
 	Admin_Zone(iClient);
 	return Plugin_Handled;
@@ -80,7 +80,10 @@ public int Menu_Zone(Menu mMenu, MenuAction maAction, int iParam1, int iParam2) 
 			case 3: { }
 		}
 	} else if (maAction == MenuAction_Cancel) {
-		if (iParam2 == MenuCancel_ExitBack) Admin_Menu(iParam1);
+		Player pPlayer = g_Global.Players.Get(iParam1);
+
+		if (iParam2 == MenuCancel_ExitBack) { Admin_Menu(iParam1); }
+		else if (iParam2 == MenuCancel_Exit) { pPlayer.ClearAdmin(); }
 	}
 
 	if (maAction == MenuAction_End) { delete mMenu; }
@@ -89,8 +92,7 @@ public int Menu_Zone(Menu mMenu, MenuAction maAction, int iParam1, int iParam2) 
 public Action Command_AddZone(int iClient, int iArgs) {
 	if (!Misc_CheckPlayer(iClient, PLAYER_ALIVE, true)) { return Plugin_Handled; }
 	Player pPlayer = g_Global.Players.Get(iClient);
-	pPlayer.Admin.Clear();
-
+	pPlayer.Admin = new Admin();
 	pPlayer.Admin.Setting = 0;
 	pPlayer.Admin.Option = 0;
 
@@ -142,7 +144,7 @@ void Admin_AddZone(int iClient) {
 			if (pPlayer.Admin.Zone.Group == 0) { Format(cBuffer, 512, "%t: %t", "menu_addzone_group", "menu_addzone_normal"); }
 			else { Format(cBuffer, 512, "%t: %t %i", "menu_addzone_group", "menu_addzone_bonus", pPlayer.Admin.Zone.Group); }
 
-			mMenu.AddItem("", cBuffer, g_Global.ZoneGroups != 1 ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
+			mMenu.AddItem("", cBuffer, g_Global.ZoneGroups != 0 ? ITEMDRAW_DEFAULT : ITEMDRAW_DISABLED);
 
 			mMenu.AddItem("", "", ITEMDRAW_SPACER);
 
@@ -170,9 +172,8 @@ void Admin_AddZone(int iClient) {
 }
 
 public int Menu_AddZone(Menu mMenu, MenuAction maAction, int iParam1, int iParam2) {
-	Player pPlayer = g_Global.Players.Get(iParam1);
-
 	if (maAction == MenuAction_Select) {
+		Player pPlayer = g_Global.Players.Get(iParam1);
 		float xPos[3], yPos[3];
 
 		pPlayer.Admin.Zone.GetX(xPos);
@@ -184,13 +185,13 @@ public int Menu_AddZone(Menu mMenu, MenuAction maAction, int iParam1, int iParam
 				switch (iParam2) {
 					case 1: { pPlayer.Admin.Setting = 2;}
 					case 2: { pPlayer.Admin.Setting = 3; }
-					case 4: { pPlayer.Admin.Setting = 1; pPlayer.Admin.Zone.Type = 0; pPlayer.Admin.Zone.Group = g_Global.ZoneGroups - 1; }
+					case 4: { pPlayer.Admin.Setting = 1; pPlayer.Admin.Zone.Group = g_Global.ZoneGroups; }
 				}
 			} case 1: {
 				switch (iParam2) {
 					case 1: { pPlayer.Admin.Zone.Type = Misc_CalculateZoneType(pPlayer.Admin.Zone.Type + 1); }
 					case 2: { pPlayer.Admin.Zone.Group = Misc_CalculateZoneGroup(pPlayer.Admin.Zone.Group + 1); }
-					case 4: { Zone_SaveZone(iParam1); pPlayer.Admin.Clear(); return; }
+					case 4: { Zone_SaveZone(iParam1); pPlayer.ClearAdmin(); return; }
 					case 5: { pPlayer.Admin.Zone.Group = g_Global.ZoneGroups++; }
 				}
 			} case 2, 3: { pPlayer.Admin.Option = iParam2 - 1; }
@@ -200,12 +201,14 @@ public int Menu_AddZone(Menu mMenu, MenuAction maAction, int iParam1, int iParam
 	}
 
 	if (maAction == MenuAction_Cancel) {
+		Player pPlayer = g_Global.Players.Get(iParam1);
+
 		if (iParam2 == MenuCancel_ExitBack) {
 			switch (pPlayer.Admin.Setting) {
 				case 0: { pPlayer.Admin.Setting = -1; pPlayer.Admin.Option = -1; Admin_Zone(iParam1); }
 				case 1, 2, 3: { pPlayer.Admin.Setting = 0; pPlayer.Admin.Option = 0; Admin_AddZone(iParam1);}
 			}
-		} else if (iParam2 == MenuCancel_Exit) { pPlayer.Admin.Clear(); }
+		} else if (iParam2 == MenuCancel_Exit) { pPlayer.ClearAdmin(); }
 	}
 
 	if (maAction == MenuAction_End) { delete mMenu; }
@@ -216,7 +219,7 @@ void Timer_Admin() {
 		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) { continue; }
 
 		Player pPlayer = g_Global.Players.Get(i);
-		if (pPlayer.Admin.Setting == -1) { continue; }
+		if (!pPlayer.Admin) { continue; }
 
 		float xPos[3], yPos[3];
 

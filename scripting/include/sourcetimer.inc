@@ -89,20 +89,377 @@ void RemoveTags(char[] cMessage, int iLength) {
 	for (int i = 0; i < COLORS_MAX; i++) { ReplaceString(cMessage, iLength, C_TagCodes[i], ""); }
 }
 
+methodmap Checkpoint < StringMap {
+	public Checkpoint() {
+		StringMap smMap = new StringMap();
+		smMap.SetValue("id", -1);
+		smMap.SetValue("time", -1.0);
+
+		return view_as<Checkpoint>(smMap);
+	}
+}
+
 methodmap Checkpoints < ArrayList {
 	public Checkpoints() { return view_as<Checkpoints>(new ArrayList()); }
+
+	public void Clear() {
+		for (int i = 0; i < this.Length; i++) {
+			Checkpoint cCheckpoint = this.Get(i);
+			delete cCheckpoint;
+		}
+	}
 }
 
 methodmap Record < StringMap {
 	public Record() {
 		StringMap smMap = new StringMap();
 		smMap.SetValue("checkpoints", new Checkpoints());
+		smMap.SetValue("time", -1.0);
+		smMap.SetValue("id", -1);
 
-		return view_as<Record>(smMap); }
+		return view_as<Record>(smMap);
+	}
+
+	public void Clear() {
+		Checkpoints cCheckpoints;
+		this.GetValue("checkpoints", cCheckpoints);
+		cCheckpoints.Clear();
+
+		delete cCheckpoints;
+	}
+
+	property Checkpoints Checkpoints {
+		public get() {
+			Checkpoints cCheckpoints;
+			this.GetValue("checkpoints", cCheckpoints);
+
+			return cCheckpoints;
+		}
+
+		public set(Checkpoints cCheckpoints) {
+			this.SetValue("checkpoints", cCheckpoints);
+		}
+	}
 }
 
 methodmap Records < ArrayList {
 	public Records() { return view_as<Records>(new ArrayList()); }
+
+	public void Clear() {
+		for (int i = 0; i < this.Length; i++) {
+			Record rRecord = this.Get(i);
+			rRecord.Clear();
+
+			delete rRecord;
+		}
+	}
+}
+
+methodmap Style < StringMap {
+	public Style() {
+		StringMap smMap = new StringMap();
+		smMap.SetValue("records", new Records());
+
+		return view_as<Style>(smMap);
+	}
+
+	public void Clear() {
+		Records rRecords;
+		this.GetValue("records", rRecords);
+		rRecords.Clear();
+
+		delete rRecords;
+	}
+
+	property Records Records {
+		public get() {
+			Records rRecords;
+			this.GetValue("records", rRecords);
+
+			return rRecords;
+		}
+
+		public set(Records rRecords) {
+			this.SetValue("records", rRecords);
+		}
+	}
+}
+
+methodmap Styles < ArrayList {
+	public Styles() { return view_as<Styles>(new ArrayList()); }
+
+	public void Clear() {
+		for (int i = 0; i < this.Length; i++) {
+			Style sStyle = this.Get(i);
+			sStyle.Clear();
+
+			delete sStyle;
+		}
+	}
+}
+
+methodmap Zone < StringMap {
+	public Zone() {
+		StringMap smMap = new StringMap();
+		smMap.SetArray("x", {0.0, 0.0, 0.0}, 3);
+		smMap.SetArray("y", {0.0, 0.0, 0.0}, 3);
+
+		smMap.SetValue("type", -1);
+		smMap.SetValue("group", -1);
+		smMap.SetValue("entity", -1);
+
+		return view_as<Zone>(smMap);
+	}
+
+	public void GetX(float[] xPos) {
+		this.GetArray("x", xPos, 3);
+	}
+
+	public void SetX(const float[] xPos) {
+		this.SetArray("x", xPos, 3);
+	}
+
+	public void GetY(float[] yPos) {
+		this.GetArray("y", yPos, 3);
+	}
+
+	public void SetY(const float[] yPos) {
+		this.SetArray("y", yPos, 3);
+	}
+
+	property int Type {
+		public get() {
+			int iType;
+			this.GetValue("type", iType);
+
+			return iType;
+		}
+
+		public set(int iType) {
+			this.SetValue("type", iType);
+		}
+	}
+
+	property int Group {
+		public get() {
+			int iGroup;
+			this.GetValue("group", iGroup);
+
+			return iGroup;
+		}
+
+		public set(int iGroup) {
+			this.SetValue("group", iGroup);
+		}
+	}
+
+	property int Entity {
+		public get() {
+			int iEntity;
+			this.GetValue("entity", iEntity);
+
+			return iEntity;
+		}
+
+		public set(int iEntity) {
+			this.SetValue("entity", iEntity);
+		}
+	}
+}
+
+methodmap Zones < ArrayList {
+	public Zones() { return view_as<Zones>(new ArrayList()); }
+
+	public void Clear() {
+		for (int i = 0; i < this.Length; i++) {
+			Zone zZone = this.Get(i);
+			delete zZone;
+		}
+	}
+}
+
+methodmap Admin < StringMap {
+	public Admin() {
+		StringMap smMap = new StringMap();
+		smMap.SetValue("zone", new Zone());
+
+		smMap.SetValue("setting", -1);
+		smMap.SetValue("option", -1);
+
+		return view_as<Admin>(smMap);
+	}
+
+	public void Clear() {
+		Zone zZone;
+		this.GetValue("zone", zZone);
+
+		delete zZone;
+	}
+
+	property Zone Zone {
+		public get() {
+			Zone zZone;
+			this.GetValue("zone", zZone);
+
+			return zZone;
+		}
+
+		public set(Zone zZone) {
+			this.GetValue("zone", zZone);
+		}
+	}
+
+	property int Setting {
+		public get() {
+			int iSetting;
+			this.GetValue("setting", iSetting);
+
+			return iSetting;
+		}
+
+		public set(int iSetting) {
+			this.SetValue("setting", iSetting);
+		}
+	}
+
+	property int Option {
+		public get() {
+			int iOption;
+			this.GetValue("option", iOption);
+
+			return iOption;
+		}
+
+		public set(int iOption) {
+			this.SetValue("option", iOption);
+		}
+	}
+}
+
+methodmap Player < StringMap {
+	public Player() {
+		StringMap smMap = new StringMap();
+		smMap.SetValue("styles", new Styles());
+
+		smMap.SetValue("zonetype", -1);
+		smMap.SetValue("zonegroup", -1);
+		smMap.SetValue("start", -1.0);
+		smMap.SetValue("style", -1);
+
+		return view_as<Player>(smMap);
+	}
+
+	public void ClearAdmin() {
+		Admin aAdmin;
+		this.GetValue("admin", aAdmin);
+		aAdmin.Clear();
+
+		delete aAdmin;
+	}
+
+	public void ClearStyles() {
+		Styles sStyles;
+		this.GetValue("styles", sStyles);
+		sStyles.Clear();
+
+		delete sStyles;
+	}
+
+	public void Clear() {
+		this.ClearAdmin();
+		this.ClearStyles();
+	}
+
+	property Admin Admin {
+		public get() {
+			Admin aAdmin;
+			this.GetValue("admin", aAdmin));
+			
+			return aAdmin;
+		}
+
+		public set(Admin aAdmin) {
+			this.SetValue("admin", aAdmin);
+		}
+	}
+
+	property Styles Styles {
+		public get() {
+			Styles sStyles;
+			this.GetValue("styles", sStyles);
+
+			return sStyles;
+		}
+
+		public set(Styles sStyles) {
+			this.SetValue("styles", sStyles);
+		}
+	}
+
+	property int ZoneType {
+		public get() {
+			int iZoneType;
+			this.GetValue("zonetype", iZoneType);
+
+			return iZoneType;
+		}
+
+		public set(int iZoneType) {
+			this.SetValue("zonetype", iZoneType);
+		}
+	}
+
+	property int ZoneGroup {
+		public get() {
+			int iZoneGroup;
+			this.GetValue("zonegroup", iZoneGroup);
+
+			return iZoneGroup;
+		}
+
+		public set(int iZoneGroup) {
+			this.SetValue("zonegroup", iZoneGroup);
+		}
+	}
+
+	property float Start {
+		public get() {
+			float fStart;
+			this.GetValue("start", fStart);
+
+			return fStart;
+		}
+
+		public set(float fStart) {
+			this.SetValue("start", fStart);
+		}
+	}
+
+	property int Style {
+		public get() {
+			int iStyle;
+			this.GetValue("style", iStyle);
+
+			return iStyle;
+		}
+
+		public set(int iStyle) {
+			this.SetValue("style", iStyle);
+		}
+	}
+}
+
+methodmap Players < ArrayList {
+	public Players() { return view_as<Players>(new ArrayList()); }
+
+	public void Clear() {
+		for (int i = 0; i < this.Length; i++) {
+			Player pPlayer = this.Get(i);
+			pPlayer.Clear();
+
+			delete pPlayer;
+		}
+	}
 }
 
 methodmap Models < StringMap {
@@ -163,266 +520,24 @@ methodmap Models < StringMap {
 	}
 }
 
-methodmap Zone < StringMap {
-	public Zone() {
-		StringMap smMap = new StringMap();
-		smMap.SetArray("x", {0.0, 0.0, 0.0}, 3);
-		smMap.SetArray("y", {0.0, 0.0, 0.0}, 3);
-
-		smMap.SetValue("id", -1);
-		smMap.SetValue("type", -1);
-		smMap.SetValue("group", -1);
-
-		return view_as<Zone>(smMap);
-	}
-
-	public void GetX(float[] xPos) {
-		this.GetArray("x", xPos, 3);
-	}
-
-	public void GetY(float[] yPos) {
-		this.GetArray("y", yPos, 3);
-	}
-
-	public void SetX(const float[] xPos) {
-		this.SetArray("x", xPos, 3);
-	}
-
-	public void SetY(const float[] yPos) {
-		this.SetArray("y", yPos, 3);
-	}
-
-	property int Id {
-		public get() {
-			int iId;
-			this.GetValue("id", iId);
-
-			return iId;
-		}
-
-		public set(int iId) {
-			this.SetValue("id", iId);
-		}
-	}
-
-	property int Type {
-		public get() {
-			int iType;
-			this.GetValue("type", iType);
-
-			return iType;
-		}
-
-		public set(int iType) {
-			this.SetValue("type", iType);
-		}
-	}
-
-	property int Group {
-		public get() {
-			int iGroup;
-			this.GetValue("group", iGroup);
-
-			return iGroup;
-		}
-
-		public set(int iGroup) {
-			this.SetValue("group", iGroup);
-		}
-	}
-
-	property int Entity {
-		public get() {
-			int iEntity;
-			this.GetValue("entity", iEntity);
-
-			return iEntity;
-		}
-
-		public set(int iEntity) {
-			this.SetValue("entity", iEntity);
-		}
-	}
-}
-
-methodmap Admin < StringMap {
-	public Admin() {
-		StringMap smMap = new StringMap();
-		smMap.SetValue("zone", new Zone());
-
-		smMap.SetValue("setting", -1);
-		smMap.SetValue("option", -1);
-
-		return view_as<Admin>(smMap);
-	}
-
-	public void Clear() {
-		Zone zZone;
-		this.GetValue("zone", zZone);
-
-		this.SetValue("zone", new Zone());
-		this.SetValue("setting", -1);
-		this.SetValue("option", -1);
-
-		delete zZone;
-	}
-
-	property Zone Zone {
-		public get() {
-			Zone zZone;
-			this.GetValue("zone", zZone);
-
-			return zZone;
-		}
-
-		public set(Zone zZone) {
-			this.GetValue("zone", zZone);
-		}
-	}
-
-	property int Setting {
-		public get() {
-			int iSetting;
-			this.GetValue("setting", iSetting);
-
-			return iSetting;
-		}
-
-		public set(int iSetting) {
-			this.SetValue("setting", iSetting);
-		}
-	}
-
-	property int Option {
-		public get() {
-			int iOption;
-			this.GetValue("option", iOption);
-
-			return iOption;
-		}
-
-		public set(int iOption) {
-			this.SetValue("option", iOption);
-		}
-	}
-}
-
-methodmap Player < StringMap {
-	public Player() {
-		StringMap smMap = new StringMap();
-		smMap.SetValue("admin", new Admin());
-
-		smMap.SetValue("starttime", -1.0);
-		smMap.SetValue("zonetype", -1);
-		smMap.SetValue("zonegroup", -1);
-
-		return view_as<Player>(smMap);
-	}
-
-	public void ClearAdmin() {
-		Admin aAdmin;
-		this.GetValue("admin", aAdmin);
-		aAdmin.Clear();
-
-		this.SetValue("admin", new Admin());
-		delete aAdmin;
-	}
-
-	public void Clear() {
-		this.ClearAdmin();
-
-		this.SetValue("starttime", -1);
-		this.SetValue("zonetype", -1);
-		this.SetValue("zonegroup", -1);
-	}
-
-	property Admin Admin {
-		public get() {
-			Admin aAdmin;
-			this.GetValue("admin", view_as<Admin>(aAdmin));
-
-			return aAdmin;
-		}
-
-		public set(Admin aAdmin) {
-			this.SetValue("admin", aAdmin);
-		}
-	}
-
-	property float StartTime {
-		public get() {
-			float fStartTime;
-			this.GetValue("starttime", fStartTime);
-
-			return fStartTime;
-		}
-
-		public set(float fStartTime) {
-			this.SetValue("starttime", fStartTime);
-		}
-	}
-
-	property int ZoneType {
-		public get() {
-			int iZoneType;
-			this.GetValue("zonetype", iZoneType);
-
-			return iZoneType;
-		}
-
-		public set(int iZoneType) {
-			this.SetValue("zonetype", iZoneType);
-		}
-	}
-
-	property int ZoneGroup {
-		public get() {
-			int iZoneGroup;
-			this.GetValue("zonegroup", iZoneGroup);
-
-			return iZoneGroup;
-		}
-
-		public set(int iZoneGroup) {
-			this.SetValue("zonegroup", iZoneGroup);
-		}
-	}
-}
-
-methodmap Zones < ArrayList {
-	public Zones() { return view_as<Zones>(new ArrayList()); }
-
-	public void CalculateCentre(float xPos[3], float yPos[3], float fCentre[3]) {
-		for (int i = 0; i < 3; i++) { fCentre[i] = (xPos[i] + yPos[i]) / 2; }
-	}
-
-	public void CalculateSpawn(float xPos[3], float yPos[3], float fSpawn[3]) {
-		for (int i = 0; i < 3; i++) { fSpawn[i] = (xPos[i] + yPos[i]) / 2; }
-
-		if (xPos[2] <= yPos[2]) { fSpawn[2] = xPos[2] + 100.0; }
-		else { fSpawn[2] = yPos[2] + 100.0; }
-	}
-}
-
-methodmap Players < ArrayList {
-	public Players() {
-		ArrayList alList = new ArrayList();
-		for (int i = 1; i <= MaxClients; i++) { alList.Push(new Player()); }
-
-		return view_as<Players>(alList);
-	}
+methodmap Queries < ArrayList {
+	public Queries() { return view_as<Queries>(new ArrayList()); }
 }
 
 methodmap Global < StringMap {
 	public Global() {
 		StringMap smMap = new StringMap();
 		smMap.SetValue("models", new Models());
-		smMap.SetValue("players", new Players());
+		smMap.SetValue("queries", new Queries());
 		smMap.SetValue("zones", new Zones());
-		smMap.SetValue("zonegroups", 1);
-		smMap.SetValue("renderedzone", 0);
+		smMap.SetValue("styles", new Styles());
+		smMap.SetValue("players", new Players());
 
+		smMap.SetValue("storage", 0);
 		smMap.SetValue("ismysql", 0);
+		
+		smMap.SetValue("zonegroups", 0);
+		smMap.SetValue("renderedzone", 0);
 
 		return view_as<Global>(smMap);
 	}
@@ -437,6 +552,71 @@ methodmap Global < StringMap {
 
 		public set(Handle hTimer) {
 			this.SetValue("timer", hTimer);
+		}
+	}
+
+	property Models Models {
+		public get() {
+			Models mModels;
+			this.GetValue("models", mModels);
+
+			return mModels;
+		}
+
+		public set(Models mModels) {
+			this.SetValue("models", mModels);
+		}
+	}
+
+	property Queries Queries {
+		public get() {
+			Queries qQueries;
+			this.GetValue("queries", qQueries);
+
+			return qQueries;
+		}
+
+		public set(Queries qQueries) {
+			this.SetValue("queries", qQueries);
+		}
+	}
+
+	property Zones Zones {
+		public get() {
+			Zones zZones;
+			this.GetValue("zones", zZones);
+
+			return zZones;
+		}
+
+		public set(Zones zZones) {
+			this.SetValue("zones", zZones);
+		}
+	}
+
+	property Styles Styles {
+		public get() {
+			Styles sStyles;
+			this.GetValue("styles", sStyles);
+
+			return sStyles;
+		}
+
+		public set(Styles sStyles) {
+			this.SetValue("styles", sStyles);
+		}
+	}
+
+	property Players Players {
+		public get() {
+			Players pPlayers;
+			this.GetValue("players", pPlayers);
+
+			return pPlayers;
+		}
+
+		public set(Players pPlayers) {
+			this.SetValue("players", pPlayers);
 		}
 	}
 
@@ -463,45 +643,6 @@ methodmap Global < StringMap {
 
 		public set(bool bIsMySQL) {
 			this.SetValue("ismysql", bIsMySQL);
-		}
-	}
-
-	property Models Models {
-		public get() {
-			Models mModels;
-			this.GetValue("models", view_as<Models>(mModels));
-
-			return mModels;
-		}
-
-		public set(Models mModels) {
-			this.SetValue("models", mModels);
-		}
-	}
-
-	property Players Players {
-		public get() {
-			Players pPlayers;
-			this.GetValue("players", view_as<Players>(pPlayers));
-
-			return pPlayers;
-		}
-
-		public set(Players pPlayers) {
-			this.SetValue("players", pPlayers);
-		}
-	}
-
-	property Zones Zones {
-		public get() {
-			Zones zZones;
-			this.GetValue("zones", view_as<Zones>(zZones));
-
-			return zZones;
-		}
-
-		public set(Zones zZones) {
-			this.SetValue("zones", zZones);
 		}
 	}
 
