@@ -26,7 +26,7 @@
 #define TIMER_ZONES 16
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.06"
+#define PLUGIN_VERSION "0.07"
 
 #include <sourcemod>
 #include <sdkhooks>
@@ -67,13 +67,13 @@ public void OnPluginStart() {
 	for (int i = 1; i <= MaxClients; i++) {
 		g_Global.Players.Resize(i + 1);
 
-		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) continue;
+		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) { continue; }
 		g_Global.Players.Set(i, new Player());
 	}
 }
 
 public void OnMapStart() {
-	g_Global.Models = new Models();
+	Misc_PrecacheModels();
 }
 
 public void OnClientPostAdminCheck(int iClient) {
@@ -82,48 +82,13 @@ public void OnClientPostAdminCheck(int iClient) {
 
 public void OnClientDisconnect(int iClient) {
 	Player pPlayer = g_Global.Players.Get(iClient);
-	pPlayer.Clear();
 
+	pPlayer.C();
 	delete pPlayer;
 }
 
 public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
-	Player pPlayer = g_Global.Players.Get(iClient);
-	if (!pPlayer.Admin) { return; }
-	if (!((iButtons & IN_ATTACK) || (iButtons & IN_ATTACK2))) return;
-
-	float xPos[3], yPos[3];
-
-	pPlayer.Admin.Zone.GetX(xPos);
-	pPlayer.Admin.Zone.GetY(yPos);
-
-	switch (pPlayer.Admin.Setting) {
-		case 0: {
-			switch (pPlayer.Admin.Option) {
-				case 0: {
-					float fPos[3];
-					Zone_RayTrace(iClient, fPos);
-
-					if (iButtons & IN_ATTACK) { pPlayer.Admin.Zone.SetX(fPos); }
-					else { pPlayer.Admin.Zone.SetY(fPos); }
-
-					Admin_AddZone(iClient);
-				}
-			}
-		} case 2: {
-			float fValue = 0.1;
-
-			if (iButtons & IN_ATTACK2) { fValue *= -1; }
-			xPos[pPlayer.Admin.Option] += fValue;
-			pPlayer.Admin.Zone.SetX(xPos);
-		} case 3: {
-			float fValue = 0.1;
-
-			if (iButtons & IN_ATTACK2) { fValue *= -1; }
-			yPos[pPlayer.Admin.Option] += fValue;
-			pPlayer.Admin.Zone.SetY(yPos);
-		}
-	}
+	Run_Admin(iClient, iButtons);
 }
 
 public Action Timer_Global(Handle hTimer) {

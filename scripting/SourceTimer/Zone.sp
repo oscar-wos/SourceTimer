@@ -88,6 +88,7 @@ void Zone_NewZone(float xPos[3], float yPos[3], int iType, int iGroup) {
 	zZone.Type = iType;
 	zZone.Group = iGroup;
 	zZone.Entity = CreateEntityByName("trigger_multiple");
+	zZone.Id = g_Global.Zones.Length;
 
 	if (zZone.Entity > 0 && IsValidEntity(zZone.Entity)) {
 		char[] cBuffer = new char[512];
@@ -139,13 +140,19 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 	Zone zZone = g_Global.Zones.Get(iIndex);
 
 	switch (zZone.Type) {
-		case 0: { if (pPlayer.Start != -1.0) { PrintToChatAll("Player Checkpoint: %f", GetGameTime() - pPlayer.Start); } }
-		case 1: { pPlayer.Start = -1.0; }
-		case 2: { if (pPlayer.Start != -1.0) { PrintToChatAll("Player Finished: %f", GetGameTime() - pPlayer.Start); pPlayer.Start = -1.0; } }
-	}
+		case 0: {
+			if (pPlayer.Record == INVALID_HANDLE) { return; }
+			Checkpoint cCheckpoint = new Checkpoint();
+			cCheckpoint.Time = GetGameTime() - pPlayer.Record.StartTime;
 
-	pPlayer.ZoneType = zZone.Type;
-	pPlayer.ZoneGroup = zZone.Group;
+			pPlayer.Record.Checkpoints.Push(cCheckpoint);
+			PrintToChatAll("Pushed NEw CP");
+		} case 1: {
+			if (pPlayer.Record != INVALID_HANDLE) { pPlayer.CRecord(); }
+		} case 2: {
+			if (pPlayer.Record == INVALID_HANDLE) { return; }
+		}
+	}
 }
 
 public Action Entity_EndTouch(int iCaller, int iActivator) {
@@ -162,13 +169,15 @@ public Action Entity_EndTouch(int iCaller, int iActivator) {
 	Zone zZone = g_Global.Zones.Get(iIndex);
 
 	switch (zZone.Type) {
-		case 0: { }
-		case 1: { pPlayer.Start = GetGameTime(); }
-		case 2: { }
-	}
+		case 0: {
 
-	pPlayer.ZoneType = -1;
-	pPlayer.ZoneGroup = zZone.Group;
+		} case 1: {
+			pPlayer.Record = new Record();
+			pPlayer.Record.StartTime = GetGameTime();
+			pPlayer.Record.Group = zZone.Group;
+			pPlayer.Record.Style = pPlayer.Style;
+		} case 2: { }
+	}
 }
 
 void Timer_Zone() {
