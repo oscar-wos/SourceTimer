@@ -15,7 +15,9 @@
 * this program. If not, see http://www.gnu.org/licenses/.
 */
 
-// Compiler Info: Pawn 1.9 - build 6281
+// Compiler Info: Pawn 1.10 - build 6434
+#pragma semicolon 1
+#pragma newdecls required
 
 // The following to be put into a Config
 #define TEXT_DEFAULT "{white}"
@@ -26,7 +28,7 @@
 #define TIMER_ZONES 16
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.07"
+#define PLUGIN_VERSION "0.08"
 
 #include <sourcemod>
 #include <sdkhooks>
@@ -63,6 +65,7 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_admin", Command_Admin);
 	RegConsoleCmd("sm_zone", Command_Zone);
 	RegConsoleCmd("sm_addzone", Command_AddZone);
+	RegConsoleCmd("sm_test", Command_Test);
 
 	for (int i = 1; i <= MaxClients; i++) {
 		g_Global.Players.Resize(i + 1);
@@ -70,6 +73,15 @@ public void OnPluginStart() {
 		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) { continue; }
 		g_Global.Players.Set(i, new Player());
 	}
+}
+
+public Action Command_Test(int iClient, int iArgs) {
+	for (int i = 0; i < 10000; i++) {
+		Record rNewRecord = new Record();
+		g_Global.Records.Push(rNewRecord);
+	}
+
+	PrintToChatAll("%i", g_Global.Records.Length);
 }
 
 public void OnMapStart() {
@@ -81,10 +93,7 @@ public void OnClientPostAdminCheck(int iClient) {
 }
 
 public void OnClientDisconnect(int iClient) {
-	Player pPlayer = g_Global.Players.Get(iClient);
-
-	pPlayer.C();
-	delete pPlayer;
+	Player pPlayer = g_Global.Players.Get(iClient); pPlayer.C(); delete pPlayer;
 }
 
 public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
