@@ -144,17 +144,78 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 			if (gP_Player[iActivator].Record.Group != zZone.Group) return;
 
 			gP_Player[iActivator].Record.EndTime = GetGameTime() - gP_Player[iActivator].Record.StartTime;
+			gP_Player[iActivator].Record.StartTime = 0.0;
+			gP_Player[iActivator].Record.Id = g_Global.Records.Length + 1;
 			Checkpoints cCheckpoints = view_as<Checkpoints>(gP_Player[iActivator].Checkpoints.Clone());
 
-			PrintToChatAll("FINT: %f, FING: %i", gP_Player[iActivator].Record.EndTime, gP_Player[iActivator].Record.Group);
 			for (int i = 0; i < cCheckpoints.Length; i++) {
 				Checkpoint cCheckpoint;
 				cCheckpoints.GetArray(i, cCheckpoint);
-				PrintToChatAll("CPI: %i, CPZ: %i, CPT: %f", i, cCheckpoint.ZoneId, cCheckpoint.Time);
+				cCheckpoint.RecordId = gP_Player[iActivator].Record.Id;
+
+				Zone zCheckpoint;
+				g_Global.Zones.GetArray(g_Global.Zones.FindByZoneId(cCheckpoint.ZoneId), zCheckpoint);
+
+				if (g_Global.Records.FindByRecordId(zCheckpoint.RecordId[0]) == -1) zCheckpoint.RecordId[0] = cCheckpoint.RecordId;
+				else {
+					Checkpoints cCheckpointsServerBestAll = g_Global.Checkpoints.FindByRecordId(zCheckpoint.RecordId[0]);
+					Checkpoints cCheckpointsServerBest = cCheckpointsServerBestAll.FindByZoneId(zCheckpoint.Id);
+
+					if (cCheckpointsServerBest.Length == 0) zCheckpoint.RecordId[0] = cCheckpoint.RecordId;
+					else {
+						Checkpoint cCheckpointServerBest;
+						cCheckpointsServerBest.GetArray(0, cCheckpointServerBest);
+
+						if (cCheckpoint.Time < cCheckpointServerBest.Time) zCheckpoint.RecordId[0] = cCheckpoint.RecordId;
+					}
+
+					delete cCheckpointsServerBestAll;
+					delete cCheckpointsServerBest;
+				}
+
+				if (gP_Player[iActivator].Records.FindByRecordId(zCheckpoint.RecordId[iActivator]) == -1) zCheckpoint.RecordId[iActivator] = cCheckpoint.RecordId;
+				else {
+					Checkpoints cCheckpointsPersonalBestAll = gP_Player[iActivator].RecordCheckpoints.FindByRecordId(zCheckpoint.RecordId[iActivator]);
+					Checkpoints cCheckpointsPersonalBest = cCheckpointsPersonalBestAll.FindByZoneId(zCheckpoint.Id);
+
+					if (cCheckpointsPersonalBest.Length == 0) zCheckpoint.RecordId[iActivator] = cCheckpoint.RecordId;
+					else {
+						Checkpoint cCheckpointPersonalBest;
+						cCheckpointsPersonalBest.GetArray(0, cCheckpointPersonalBest);
+
+						if (cCheckpoint.Time < cCheckpointPersonalBest.Time) zCheckpoint.RecordId[iActivator] = cCheckpoint.RecordId;
+					}
+
+					delete cCheckpointsPersonalBestAll;
+					delete cCheckpointsPersonalBest;
+				}
+
+				g_Global.Checkpoints.PushArray(cCheckpoint);
+				gP_Player[iActivator].RecordCheckpoints.PushArray(cCheckpoint);
+				g_Global.Zones.SetArray(zCheckpoint.Id, zCheckpoint);
 			}
 
-			gP_Player[iActivator].Record.StartTime = 0.0;
 			delete cCheckpoints;
+
+			if (g_Global.Records.FindByRecordId(zZone.RecordId[0] == -1)) zZone.RecordId[0] = gP_Player[iActivator].Record.Id;
+			else {
+				Record rServerBest;
+				g_Global.Records.GetArray(g_Global.Records.FindByRecordId(zZone.RecordId[0]), rServerBest);
+
+				if (gP_Player[iActivator].Record.EndTime < rServerBest.EndTime) zZone.RecordId[0] = gP_Player[iActivator].Record.Id;
+			}
+
+			if (g_Global.Records.FindByRecordId(zZone.RecordId[iActivator] == -1)) zZone.RecordId[iActivator] = gP_Player[iActivator].Record.Id;
+			else {
+				Record rPersonalBest;
+				g_Global.Records.GetArray(g_Global.Records.FindByRecordId(zZone.RecordId[iActivator]), rPersonalBest);
+
+				if (gP_Player[iActivator].Record.EndTime < rPersonalBest.EndTime) zZone.RecordId[iActivator] = gP_Player[iActivator].Record.Id;
+			}
+
+			g_Global.Records.PushArray(gP_Player[iActivator].Record);
+			gP_Player[iActivator].Records.PushArray(gP_Player[iActivator].Record);
+			g_Global.Zones.SetArray(iIndex, zZone);
 		} case ZONE_CHECKPOINT: {
 			if (gP_Player[iActivator].Record.StartTime == 0.0) return;
 			if (gP_Player[iActivator].Record.Group != zZone.Group) return;
@@ -166,6 +227,18 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 			Checkpoint cCheckpoint;
 			cCheckpoint.Time = GetGameTime() - gP_Player[iActivator].Record.StartTime;
 			cCheckpoint.ZoneId = zZone.Id;
+
+			Checkpoints cCheckpointsServerBest = g_Global.Checkpoints.FindByRecordId(zZone.RecordId[0]).FindByZoneId(zZone.Id);
+			Checkpoints cCheckpointsPersonalBest = gP_Player[iActivator].RecordCheckpoints.FindByRecordId(zZone.RecordId[iActivator]).FindByZoneId(zZone.Id);
+
+			if (cCheckpointsServerBest.Length != 0 && cCheckpointsPersonalBest.Length != 0) {
+				Checkpoint cCheckpointServerBest, cCheckpointPersonalBest;
+				cCheckpointsServerBest.GetArray(0, cCheckpointServerBest);
+				cCheckpointsPersonalBest.GetArray(0, cCheckpointPersonalBest);
+
+				PrintToChatAll("T: %.3f, SB: %.3f, PB: %.3f", cCheckpoint.Time, cCheckpointServerBest.Time, cCheckpointPersonalBest.Time);
+			}
+
 			gP_Player[iActivator].Checkpoints.PushArray(cCheckpoint);
 		}
 	}
@@ -192,6 +265,7 @@ public Action Entity_EndTouch(int iCaller, int iActivator) {
 		case ZONE_START: { 
 			gP_Player[iActivator].Record.StartTime = GetGameTime();
 			gP_Player[iActivator].Record.Group = zZone.Group;
+			gP_Player[iActivator].Record.Style = gP_Player[iActivator].Style;
 			gP_Player[iActivator].Checkpoints.Clear();
 		}	
 	}

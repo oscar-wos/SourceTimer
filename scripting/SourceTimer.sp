@@ -28,7 +28,7 @@
 #define BOX_BOUNDRY 120.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.10"
+#define PLUGIN_VERSION "0.11"
 
 #include <sourcemod>
 #include <sdktools>
@@ -58,6 +58,8 @@ public void OnPluginStart() {
 	LoadTranslations("sourcetimer.phrases");
 
 	RegConsoleCmd("sm_addzone", Command_AddZone);
+	RegConsoleCmd("sm_test", Command_Test);
+	RegConsoleCmd("sm_test2", Command_Test2);
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) continue;
@@ -65,6 +67,14 @@ public void OnPluginStart() {
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
 	}
+}
+
+public Action Command_Test(int iClient, int iArgs) {
+
+}
+
+public Action Command_Test2(int iClient, int iArgs) {
+
 }
 
 public void OnMapStart() {
@@ -79,6 +89,8 @@ public void OnClientPostAdminCheck(int iClient) {
 
 public void OnClientDisconnect(int iClient) {
 	delete gP_Player[iClient].Checkpoints;
+	delete gP_Player[iClient].RecordCheckpoints;
+	delete gP_Player[iClient].Records;
 }
 
 public Action Timer_Global(Handle hTimer) {

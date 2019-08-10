@@ -65,28 +65,6 @@ int C_Colors[][] = {
 	{ 153, 0, 153, 255 } // B End
 };
 
-stock void Timer_CommandReply(int iClient, const char[] cMessage, any ...) {
-	char[] cCMessage = new char[MAX_MESSAGE_LENGTH];
-
-	SetGlobalTransTarget(iClient);
-	VFormat(cCMessage, MAX_MESSAGE_LENGTH, cMessage, 3);
-	ChangeTags(cCMessage, MAX_MESSAGE_LENGTH);
-
-	if (iClient == 0 || GetCmdReplySource() == SM_REPLY_TO_CONSOLE) RemoveTags(cCMessage, MAX_MESSAGE_LENGTH);
-
-	if (iClient == 0) PrintToServer(cCMessage);
-	else if (GetCmdReplySource() == SM_REPLY_TO_CONSOLE) PrintToConsole(iClient, cCMessage);
-	else PrintToChat(iClient, cCMessage);
-}
-
-void ChangeTags(char[] cMessage, int iLength) {
-	for (int i = 0; i < COLORS_MAX; i++) ReplaceString(cMessage, iLength, C_Tags[i], C_TagCodes[i]);
-}
-
-void RemoveTags(char[] cMessage, int iLength) {
-	for (int i = 0; i < COLORS_MAX; i++) ReplaceString(cMessage, iLength, C_TagCodes[i], "");
-}
-
 enum struct Checkpoint {
 	float Time;
 	int ZoneId;
@@ -132,18 +110,20 @@ enum struct Record {
 
 methodmap Records < ArrayList {
 	public Records() { return view_as<Records>(new ArrayList(sizeof(Record))); }
-}
 
-enum struct Player {
-	Checkpoints RecordCheckpoints;
-	Records Records;
+	public int FindByRecordId(int iRecordId) {
+		for (int i = 0; i < this.Length; i++) {
+			Record rRecord;
+			this.GetArray(i, rRecord);
+			if (rRecord.Id == iRecordId) return i;
+		}
 
-	Checkpoints Checkpoints;
-	Record Record;
-	int iStyle;
+		return -1;
+	}
 }
 
 enum struct Zone {
+	int RecordId[MAXPLAYERS + 1];
 	int Id;
 	int Type;
 	int Group;
@@ -166,6 +146,41 @@ enum struct Zone {
 	void SetY(float fPos[3]) {
 		for (int i = 0; i < 3; i++) this.yPos[i] = fPos[i];
 	}
+}
+
+methodmap Zones < ArrayList {
+	public Zones() { return view_as<Zones>(new ArrayList(sizeof(Zone))); }
+
+	public int FindByZoneId(int iZoneId) {
+		for (int i = 0; i < this.Length; i++) {
+			Zone zZone;
+			this.GetArray(i, zZone);
+			if (zZone.Id == iZoneId) return i;
+		}
+
+		return -1;
+	}
+
+	public int GetTotalZoneGroups() {
+		int iTotalZoneGroups;
+
+		for (int i = 0; i < this.Length; i++) {
+			Zone zZone;
+			this.GetArray(i, zZone);
+			if (zZone.Group > iTotalZoneGroups) iTotalZoneGroups = zZone.Group;
+		}
+
+		return iTotalZoneGroups;
+	}
+}
+
+enum struct Player {
+	Checkpoints RecordCheckpoints;
+	Records Records;
+
+	Checkpoints Checkpoints;
+	Record Record;
+	int Style;
 }
 
 methodmap Models < StringMap {
@@ -197,39 +212,15 @@ methodmap Models < StringMap {
 	}
 }
 
-methodmap Zones < ArrayList {
-	public Zones() { return view_as<Zones>(new ArrayList(sizeof(Zone))); }
-
-	public int FindByZoneId(int iZoneId) {
-		for (int i = 0; i < this.Length; i++) {
-			Zone zZone;
-			this.GetArray(i, zZone);
-			if (zZone.Id == iZoneId) return i;
-		}
-
-		return -1;
-	}
-
-	public int GetTotalZoneGroups() {
-		int iTotalZoneGroups;
-
-		for (int i = 0; i < this.Length; i++) {
-			Zone zZone;
-			this.GetArray(i, zZone);
-			if (zZone.Group > iTotalZoneGroups) iTotalZoneGroups = zZone.Group;
-		}
-
-		return iTotalZoneGroups;
-	}
-}
-
 methodmap Global < StringMap {
 	public Global() {
 		StringMap smMap = new StringMap();
 
 		smMap.SetValue("timer", INVALID_HANDLE);
-		smMap.SetValue("models", new Models());
+		smMap.SetValue("checkpoints", new Checkpoints());
+		smMap.SetValue("records", new Records());
 		smMap.SetValue("zones", new Zones());
+		smMap.SetValue("models", new Models());
 		smMap.SetValue("render", 0);
 		return view_as<Global>(smMap);
 	}
@@ -239,9 +230,14 @@ methodmap Global < StringMap {
 		public set(Handle hTimer) { this.SetValue("timer", hTimer); }
 	}
 
-	property Models Models {
-		public get() { Models mModels; this.GetValue("models", mModels); return mModels; }
-		public set(Models mModels) { this.SetValue("models", mModels); }
+	property Checkpoints Checkpoints {
+		public get() { Checkpoints cCheckpoints; this.GetValue("checkpoints", cCheckpoints); return cCheckpoints; }
+		public set(Checkpoints cCheckpoints) { this.SetValue("checkpoints", cCheckpoints); }
+	}
+
+	property Records Records {
+		public get() { Records rRecords; this.GetValue("records", rRecords); return rRecords; }
+		public set(Records rRecords) { this.SetValue("records", rRecords); }
 	}
 
 	property Zones Zones {
@@ -249,8 +245,35 @@ methodmap Global < StringMap {
 		public set(Zones zZones) { this.SetValue("zones", zZones); }
 	}
 
+	property Models Models {
+		public get() { Models mModels; this.GetValue("models", mModels); return mModels; }
+		public set(Models mModels) { this.SetValue("models", mModels); }
+	}
+
 	property int Render {
 		public get() { int iRender; this.GetValue("render", iRender); return iRender; }
 		public set(int iRender) { this.SetValue("render", iRender); }
 	}
+}
+
+stock void Timer_CommandReply(int iClient, const char[] cMessage, any ...) {
+	char[] cCMessage = new char[MAX_MESSAGE_LENGTH];
+
+	SetGlobalTransTarget(iClient);
+	VFormat(cCMessage, MAX_MESSAGE_LENGTH, cMessage, 3);
+	ChangeTags(cCMessage, MAX_MESSAGE_LENGTH);
+
+	if (iClient == 0 || GetCmdReplySource() == SM_REPLY_TO_CONSOLE) RemoveTags(cCMessage, MAX_MESSAGE_LENGTH);
+
+	if (iClient == 0) PrintToServer(cCMessage);
+	else if (GetCmdReplySource() == SM_REPLY_TO_CONSOLE) PrintToConsole(iClient, cCMessage);
+	else PrintToChat(iClient, cCMessage);
+}
+
+void ChangeTags(char[] cMessage, int iLength) {
+	for (int i = 0; i < COLORS_MAX; i++) ReplaceString(cMessage, iLength, C_Tags[i], C_TagCodes[i]);
+}
+
+void RemoveTags(char[] cMessage, int iLength) {
+	for (int i = 0; i < COLORS_MAX; i++) ReplaceString(cMessage, iLength, C_TagCodes[i], "");
 }
