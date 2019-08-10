@@ -8,7 +8,7 @@ Drag the compiled .smx, and translations or download the whole scripting folder 
 
 ### Compiler
 
-Pawn 1.9 - build 6281
+Pawn 1.10 - build 6434
 
 ## Built With
 

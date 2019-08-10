@@ -19,27 +19,27 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-// The following to be put into a Config
+// Config TODO
 #define TEXT_DEFAULT "{white}"
 #define TEXT_HIGHLIGHT "{lightred}"
 #define TEXT_PREFIX "[{blue}Timer{white}] "
-#define BOX_BOUNDRY 120.0
 #define TIMER_INTERVAL 0.1
 #define TIMER_ZONES 16
+#define BOX_BOUNDRY 120.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.08"
+#define PLUGIN_VERSION "0.10"
 
 #include <sourcemod>
-#include <sdkhooks>
 #include <sdktools>
-#include <sourcetimer>
+#include <sdkhooks>
+#include <SourceTimer>
 
 Global g_Global;
+Player gP_Player[MAXPLAYERS + 1];
 
 #include "SourceTimer/Admin.sp"
 #include "SourceTimer/Misc.sp"
-#include "SourceTimer/Sql.sp"
 #include "SourceTimer/Zone.sp"
 
 public Plugin myinfo = {
@@ -50,38 +50,21 @@ public Plugin myinfo = {
 	url = "https://github.com/OSCAR-WOS/SourceTimer / https://steamcommunity.com/id/OSWO",
 }
 
-public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] cError, int iError) {
-	// CreateNative("Timer")
-}
-
 public void OnPluginStart() {
 	g_Global = new Global();
 	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT);
-	// Database.Connect(T_Connect, "sourcetimer");
 
 	ServerCommand("sm_reload_translations");
 	LoadTranslations("sourcetimer.phrases");
 
-	RegConsoleCmd("sm_admin", Command_Admin);
-	RegConsoleCmd("sm_zone", Command_Zone);
 	RegConsoleCmd("sm_addzone", Command_AddZone);
-	RegConsoleCmd("sm_test", Command_Test);
 
 	for (int i = 1; i <= MaxClients; i++) {
-		g_Global.Players.Resize(i + 1);
-
-		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) { continue; }
-		g_Global.Players.Set(i, new Player());
+		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) continue;
+		gP_Player[i].Checkpoints = new Checkpoints();
+		gP_Player[i].RecordCheckpoints = new Checkpoints();
+		gP_Player[i].Records = new Records();
 	}
-}
-
-public Action Command_Test(int iClient, int iArgs) {
-	for (int i = 0; i < 10000; i++) {
-		Record rNewRecord = new Record();
-		g_Global.Records.Push(rNewRecord);
-	}
-
-	PrintToChatAll("%i", g_Global.Records.Length);
 }
 
 public void OnMapStart() {
@@ -89,18 +72,20 @@ public void OnMapStart() {
 }
 
 public void OnClientPostAdminCheck(int iClient) {
-	g_Global.Players.Set(iClient, new Player());
+	gP_Player[iClient].Checkpoints = new Checkpoints();
+	gP_Player[iClient].RecordCheckpoints = new Checkpoints();
+	gP_Player[iClient].Records = new Records();
 }
 
 public void OnClientDisconnect(int iClient) {
-	Player pPlayer = g_Global.Players.Get(iClient); pPlayer.C(); delete pPlayer;
-}
-
-public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
-	Run_Admin(iClient, iButtons);
+	delete gP_Player[iClient].Checkpoints;
 }
 
 public Action Timer_Global(Handle hTimer) {
-	Timer_Zone();
-	Timer_Admin();
+	Admin_Timer();
+	Zone_Timer();
+}
+
+public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
+	Admin_Run(iClient, iButtons);
 }

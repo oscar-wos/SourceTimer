@@ -1,3 +1,9 @@
+enum {
+	ZONE_CHECKPOINT = 0,
+	ZONE_START = 1,
+	ZONE_END = 2
+}
+
 void Zone_Draw(float xPos[3], float yPos[3], int iColor, float fDisplay, bool bAll, int iClient = 0) {
 	float fPoints[8][3];
 
@@ -70,22 +76,8 @@ void Zone_DrawLine(float xPos[3], float yPos[3], int iColor[4], float fDisplay, 
 	else { TE_SendToClient(iClient); }
 }
 
-void Zone_SaveZone(int iClient) {
-	Player pPlayer = g_Global.Players.Get(iClient);
-	float xPos[3], yPos[3];
-
-	pPlayer.Admin.Zone.GetX(xPos);
-	pPlayer.Admin.Zone.GetY(yPos);
-
-	Zone_NewZone(xPos, yPos, pPlayer.Admin.Zone.Type, pPlayer.Admin.Zone.Group);
-}
-
 void Zone_NewZone(float xPos[3], float yPos[3], int iType, int iGroup) {
 	Zone zZone;
-
-	zZone.xPos = xPos;
-	zZone.yPos = yPos;
-	zZone.iType = iType;
 
 	zZone.SetX(xPos);
 	zZone.SetY(yPos);
@@ -127,7 +119,7 @@ void Zone_NewZone(float xPos[3], float yPos[3], int iType, int iGroup) {
 		}
 	}
 
-	g_Global.Zones.Push(zZone);
+	g_Global.Zones.PushArray(zZone);
 }
 
 public Action Entity_StartTouch(int iCaller, int iActivator) {
@@ -140,42 +132,41 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 	SplitString(cEntityName, ":", cEntityIndex, 16);
 	iIndex = g_Global.Zones.FindByZoneId(StringToInt(cEntityIndex));
 
-	if (iIndex == -1) { return; }
+	if (iIndex == -1) return;
 
-	Player pPlayer = g_Global.Players.Get(iActivator);
-	Zone zZone = g_Global.Zones.Get(iIndex);
+	Zone zZone;
+	g_Global.Zones.GetArray(iIndex, zZone);
 
 	switch (zZone.Type) {
-		case 0: {
-			if (pPlayer.Record == INVALID_HANDLE) { return; }
-			if (pPlayer.Record.Group != zZone.Group) { return; }
-			if (pPlayer.Record.Checkpoints.FindByZoneId(zZone.Id) != -1) { return; }
-			Checkpoint cCheckpoint = new Checkpoint();
-			cCheckpoint.Time = GetGameTime() - pPlayer.Record.StartTime;
-			cCheckpoint.ZoneId = zZone.Id;
+		case ZONE_START: { }
+		case ZONE_END: {
+			if (gP_Player[iActivator].Record.StartTime == 0.0) return;
+			if (gP_Player[iActivator].Record.Group != zZone.Group) return;
 
-			pPlayer.Record.Checkpoints.Push(cCheckpoint);
-		} case 1: {
-			if (pPlayer.Record != INVALID_HANDLE) { pPlayer.CRecord(); }
-		} case 2: {
-			if (pPlayer.Record == INVALID_HANDLE) { return; }
-			if (pPlayer.Record.Group != zZone.Group) { return; }
-			Record rNewRecord = new Record();
+			gP_Player[iActivator].Record.EndTime = GetGameTime() - gP_Player[iActivator].Record.StartTime;
+			Checkpoints cCheckpoints = view_as<Checkpoints>(gP_Player[iActivator].Checkpoints.Clone());
 
-			rNewRecord.Checkpoints = view_as<Checkpoints>(pPlayer.Record.Checkpoints.Clone());
-			rNewRecord.EndTime = GetGameTime() - pPlayer.Record.StartTime;
-			rNewRecord.Group = pPlayer.Record.Group;
-			rNewRecord.Style = pPlayer.Record.Style;
-			rNewRecord.Id = g_Global.Records.Length;
-			rNewRecord.Time = GetTime();
-			g_Global.Records.Push(rNewRecord);
-
-			PrintToChatAll("End: %f, ID: %i", rNewRecord.EndTime, rNewRecord.Id);
-			for (int i = 0; i < rNewRecord.Checkpoints.Length; i++) {
-				Checkpoint cCheckpoint = rNewRecord.Checkpoints.Get(i);
-				PrintToChatAll("CP Index: %i, ZoneID: %i, Time: %f", i, cCheckpoint.ZoneId, cCheckpoint.Time);
+			PrintToChatAll("FINT: %f, FING: %i", gP_Player[iActivator].Record.EndTime, gP_Player[iActivator].Record.Group);
+			for (int i = 0; i < cCheckpoints.Length; i++) {
+				Checkpoint cCheckpoint;
+				cCheckpoints.GetArray(i, cCheckpoint);
+				PrintToChatAll("CPI: %i, CPZ: %i, CPT: %f", i, cCheckpoint.ZoneId, cCheckpoint.Time);
 			}
-			pPlayer.CRecord();
+
+			gP_Player[iActivator].Record.StartTime = 0.0;
+			delete cCheckpoints;
+		} case ZONE_CHECKPOINT: {
+			if (gP_Player[iActivator].Record.StartTime == 0.0) return;
+			if (gP_Player[iActivator].Record.Group != zZone.Group) return;
+
+			Checkpoints cCheckpoints = gP_Player[iActivator].Checkpoints.FindByZoneId(zZone.Id);
+			if (cCheckpoints.Length == 1) return;
+			delete cCheckpoints;
+
+			Checkpoint cCheckpoint;
+			cCheckpoint.Time = GetGameTime() - gP_Player[iActivator].Record.StartTime;
+			cCheckpoint.ZoneId = zZone.Id;
+			gP_Player[iActivator].Checkpoints.PushArray(cCheckpoint);
 		}
 	}
 }
@@ -190,39 +181,39 @@ public Action Entity_EndTouch(int iCaller, int iActivator) {
 	SplitString(cEntityName, ":", cEntityIndex, 16);
 	iIndex = g_Global.Zones.FindByZoneId(StringToInt(cEntityIndex));
 
-	if (iIndex == -1) { return; }
+	if (iIndex == -1) return;
 
-	Player pPlayer = g_Global.Players.Get(iActivator);
-	Zone zZone = g_Global.Zones.Get(iIndex);
+	Zone zZone;
+	g_Global.Zones.GetArray(iIndex, zZone);
 
 	switch (zZone.Type) {
-		case 0: {
-
-		} case 1: {
-			pPlayer.Record = new Record();
-			pPlayer.Record.StartTime = GetGameTime();
-			pPlayer.Record.Group = zZone.Group;
-			pPlayer.Record.Style = pPlayer.Style;
-		} case 2: { }
+		case ZONE_CHECKPOINT: { }
+		case ZONE_END: { }
+		case ZONE_START: { 
+			gP_Player[iActivator].Record.StartTime = GetGameTime();
+			gP_Player[iActivator].Record.Group = zZone.Group;
+			gP_Player[iActivator].Checkpoints.Clear();
+		}	
 	}
 }
 
-void Timer_Zone() {
-	for (int i = 0; i < TIMER_ZONES && g_Global.RenderedZone < g_Global.Zones.Length; i++) {
-		Zone zZone = g_Global.Zones.Get(g_Global.RenderedZone);
+void Zone_Timer() {
+	for (int i = 0; i < TIMER_ZONES && g_Global.Render < g_Global.Zones.Length; i++) {
+		Zone zZone;
+		g_Global.Zones.GetArray(g_Global.Render, zZone);
 
 		float xPos[3], yPos[3];
 		zZone.GetX(xPos);
 		zZone.GetY(yPos);
 
 		int iColor = zZone.Type + 5;
-		if (zZone.Group > 0) { iColor += 3; }
+		if (zZone.Group > 0) iColor += 3;
 
 		Zone_Draw(xPos, yPos, iColor, TIMER_INTERVAL + (g_Global.Zones.Length / TIMER_ZONES) * TIMER_INTERVAL, true);
-		g_Global.RenderedZone++;
+		g_Global.Render++;
 	}
 
-	if (g_Global.RenderedZone == g_Global.Zones.Length) { g_Global.RenderedZone = 0; }
+	if (g_Global.Render == g_Global.Zones.Length) g_Global.Render = 0;
 }
 
 bool Filter_HitSelf(int iEntity, int iMask, any aData) {

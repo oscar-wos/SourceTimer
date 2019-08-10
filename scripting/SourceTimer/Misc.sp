@@ -24,23 +24,14 @@ void Misc_PrecacheModels() {
 	g_Global.Models.Zone = PrecacheModel("models/error.mdl");
 }
 
-void Misc_CalculateCentre(float xPos[3], float yPos[3], float fCentre[3]) {
-	for (int i = 0; i < 3; i++) { fCentre[i] = (xPos[i] + yPos[i]) / 2; }
-}
-
-/*
-void Misc_CalculateSpawn(float xPos[3], float yPos[3], float fSpawn[3]) {
-	for (int i = 0; i < 3; i++) { fSpawn[i] = (xPos[i] + yPos[i]) / 2; }
-
-	if (xPos[2] <= yPos[2]) { fSpawn[2] = xPos[2] + 100.0; }
-	else { fSpawn[2] = yPos[2] + 100.0; }
-}
-*/
-
 int Misc_CalculateZoneType(int iType) {
 	return iType % ZONES_TOTAL;
 }
 
 int Misc_CalculateZoneGroup(int iGroup) {
-	return iGroup % g_Global.ZoneGroups;
+	return iGroup % (g_Global.Zones.GetTotalZoneGroups() + 2);
+}
+
+void Misc_CalculateCentre(float xPos[3], float yPos[3], float fCentre[3]) {
+	for (int i = 0; i < 3; i++) fCentre[i] = (xPos[i] + yPos[i]) / 2;
 }
