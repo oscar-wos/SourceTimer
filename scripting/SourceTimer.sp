@@ -28,7 +28,7 @@
 #define BOX_BOUNDRY 120.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.11"
+#define PLUGIN_VERSION "0.12"
 
 #include <sourcemod>
 #include <sdktools>
@@ -100,4 +100,5 @@ public Action Timer_Global(Handle hTimer) {
 
 public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
 	Admin_Run(iClient, iButtons);
+	Zone_Run(iClient);
 }

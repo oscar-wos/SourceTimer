@@ -123,7 +123,7 @@ methodmap Records < ArrayList {
 }
 
 enum struct Zone {
-	int RecordId[MAXPLAYERS + 1];
+	int RecordIndex[MAXPLAYERS + 1];
 	int Id;
 	int Type;
 	int Group;
@@ -180,6 +180,9 @@ enum struct Player {
 
 	Checkpoints Checkpoints;
 	Record Record;
+	int CurrentZone;
+	int PreviousZone;
+	int PreviousZoneTime;
 	int Style;
 }
 
