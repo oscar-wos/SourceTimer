@@ -181,8 +181,6 @@ enum struct Player {
 	Checkpoints Checkpoints;
 	Record Record;
 	int CurrentZone;
-	int PreviousZone;
-	int PreviousZoneTime;
 	int Style;
 }
 
@@ -210,8 +208,32 @@ methodmap Models < StringMap {
 	}
 
 	property int Zone {
-		public get() { int iZone; this.GetValue("zone", iZone); return iZone; }
+		public get() { int iIndex; this.GetValue("zone", iIndex); return iIndex; }
 		public set(int iIndex) { this.SetValue("zone", iIndex); }
+	}
+}
+
+enum QueryType {
+	QUERY_CREATETABLE = 0,
+	QUERY_INSERTZONE = 1,
+	QUERY_SELECTZONE = 2,
+	QUERY_DELETEZONE = 3
+}
+
+methodmap Query < StringMap {
+	public Query() { return view_as<Query>(new StringMap()); }
+
+	public void GetQuery(char[] cQuery, int iLength) {
+		this.GetString("query", cQuery, iLength);
+	}
+
+	public void SetQuery(char[] cQuery) {
+		this.SetString("query", cQuery);
+	}
+
+	property int Type {
+		public get() { int iType; this.GetValue("type", iType); return iType; }
+		public set(int iType) { this.SetValue("type", iType); }
 	}
 }
 
@@ -220,6 +242,8 @@ methodmap Global < StringMap {
 		StringMap smMap = new StringMap();
 
 		smMap.SetValue("timer", INVALID_HANDLE);
+		smMap.SetValue("storage", INVALID_HANDLE);
+		smMap.SetValue("queries", new ArrayList());
 		smMap.SetValue("checkpoints", new Checkpoints());
 		smMap.SetValue("records", new Records());
 		smMap.SetValue("zones", new Zones());
@@ -231,6 +255,21 @@ methodmap Global < StringMap {
 	property Handle Timer {
 		public get() { Handle hTimer; this.GetValue("timer", hTimer); return hTimer; }
 		public set(Handle hTimer) { this.SetValue("timer", hTimer); }
+	}
+
+	property Database Storage {
+		public get() { Database dStorage; this.GetValue("storage", dStorage); return dStorage; }
+		public set(Database dStorage) { this.SetValue("storage", dStorage); }
+	}
+
+	property bool IsMySql {
+		public get() { bool bIsMySql; this.GetValue("ismysql", bIsMySql); return bIsMySql; }
+		public set(bool bIsMySql) { this.SetValue("ismysql", bIsMySql); }
+	}
+
+	property ArrayList Queries {
+		public get() { ArrayList alQueries; this.GetValue("queries", alQueries); return alQueries; }
+		public set(ArrayList alQueries) { this.SetValue("queries", alQueries); }
 	}
 
 	property Checkpoints Checkpoints {

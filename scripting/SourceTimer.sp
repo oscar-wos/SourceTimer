@@ -26,9 +26,10 @@
 #define TIMER_INTERVAL 0.1
 #define TIMER_ZONES 16
 #define BOX_BOUNDRY 120.0
+#define HUD_SHOWPREVIOUS 5.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.12"
+#define PLUGIN_VERSION "0.13"
 
 #include <sourcemod>
 #include <sdktools>
@@ -40,6 +41,7 @@ Player gP_Player[MAXPLAYERS + 1];
 
 #include "SourceTimer/Admin.sp"
 #include "SourceTimer/Misc.sp"
+#include "SourceTimer/Sql.sp"
 #include "SourceTimer/Zone.sp"
 
 public Plugin myinfo = {
@@ -53,27 +55,27 @@ public Plugin myinfo = {
 public void OnPluginStart() {
 	g_Global = new Global();
 	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT);
+	Database.Connect(T_Connect, "sourcetimer");
 
 	ServerCommand("sm_reload_translations");
 	LoadTranslations("sourcetimer.phrases");
 
 	RegConsoleCmd("sm_addzone", Command_AddZone);
 	RegConsoleCmd("sm_test", Command_Test);
-	RegConsoleCmd("sm_test2", Command_Test2);
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) continue;
 		gP_Player[i].Checkpoints = new Checkpoints();
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
+
+		if (!Misc_CheckPlayer(i, PLAYER_ALIVE)) continue;
 	}
+
+	Sql_CreateTables();
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-
-}
-
-public Action Command_Test2(int iClient, int iArgs) {
 
 }
 
@@ -95,10 +97,12 @@ public void OnClientDisconnect(int iClient) {
 
 public Action Timer_Global(Handle hTimer) {
 	Admin_Timer();
+	Sql_Timer();
 	Zone_Timer();
 }
 
 public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
 	Admin_Run(iClient, iButtons);
-	Zone_Run(iClient);
+	Zone_Run(iClient, iButtons);
+	return Plugin_Changed;
 }

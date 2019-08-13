@@ -47,8 +47,8 @@ void Misc_FormatTime(float fTime, char[] cBuffer, int iMaxLength) {
 }
 
 void Misc_FormatTimePrefix(float fTime, float fDiff, char[] cBuffer, int iMaxLength) {
-	if (fTime == 0) Format(cBuffer, iMaxLength, "\x0A~%s\x01", cBuffer);
-	else if (fDiff == 0) Format(cBuffer, iMaxLength, "\x10=%s\x01", cBuffer);
+	if (fTime == 0) Format(cBuffer, iMaxLength, "\x0A%s\x01", cBuffer);
+	else if (fDiff == 0) Format(cBuffer, iMaxLength, "\x10%s\x01", cBuffer);
 	else if (fDiff > 0) Format(cBuffer, iMaxLength, "\x06+%s\x01", cBuffer);
 	else Format(cBuffer, iMaxLength, "\x07-%s\x01", cBuffer);
 }
