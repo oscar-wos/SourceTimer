@@ -217,7 +217,13 @@ enum QueryType {
 	QUERY_CREATETABLE = 0,
 	QUERY_INSERTZONE = 1,
 	QUERY_SELECTZONE = 2,
-	QUERY_DELETEZONE = 3
+	QUERY_DELETEZONE = 3,
+	QUERY_INSERTRECORD = 4,
+	QUERY_SELECTRECORD = 5,
+	QUERY_DELETERECORD = 6,
+	QUERY_INSERTCHECKPOINT = 7,
+	QUERY_SELECTCHECKPOINT = 8,
+	QUERy_DELETECHECKPOINT = 9
 }
 
 methodmap Query < StringMap {
@@ -234,6 +240,16 @@ methodmap Query < StringMap {
 	property int Type {
 		public get() { int iType; this.GetValue("type", iType); return iType; }
 		public set(int iType) { this.SetValue("type", iType); }
+	}
+
+	property int Index {
+		public get() { int iIndex; this.GetValue("index", iIndex); return iIndex; }
+		public set(int iIndex) { this.SetValue("index", iIndex); }
+	}
+
+	property Checkpoints Checkpoints {
+		public get() { Checkpoints cCheckpoints; this.GetValue("checkpoints", cCheckpoints); return cCheckpoints; }
+		public set(Checkpoints cCheckpoints) { this.SetValue("checkpoints", cCheckpoints); }
 	}
 }
 

@@ -29,7 +29,7 @@
 #define HUD_SHOWPREVIOUS 5.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.13"
+#define PLUGIN_VERSION "0.14"
 
 #include <sourcemod>
 #include <sdktools>
@@ -71,8 +71,6 @@ public void OnPluginStart() {
 
 		if (!Misc_CheckPlayer(i, PLAYER_ALIVE)) continue;
 	}
-
-	Sql_CreateTables();
 }
 
 public Action Command_Test(int iClient, int iArgs) {
