@@ -127,7 +127,6 @@ enum struct Zone {
 	int Id;
 	int Type;
 	int Group;
-	int Entity;
 	float xPos[3];
 	float yPos[3];
 
@@ -156,6 +155,16 @@ methodmap Zones < ArrayList {
 			Zone zZone;
 			this.GetArray(i, zZone);
 			if (zZone.Id == iZoneId) return i;
+		}
+
+		return -1;
+	}
+
+	public int FindSingleZone(int iType, int iGroup) {
+		for (int i = 0; i < this.Length; i++) {
+			Zone zZone;
+			this.GetArray(i, zZone);
+			if ((zZone.Type == iType) && (zZone.Group == iGroup)) return i;
 		}
 
 		return -1;
@@ -213,17 +222,25 @@ methodmap Models < StringMap {
 	}
 }
 
-enum QueryType {
+enum {
 	QUERY_CREATETABLE = 0,
 	QUERY_INSERTZONE = 1,
+	QUERY_UPDATEZONE = 3,
 	QUERY_SELECTZONE = 2,
-	QUERY_DELETEZONE = 3,
-	QUERY_INSERTRECORD = 4,
-	QUERY_SELECTRECORD = 5,
-	QUERY_DELETERECORD = 6,
-	QUERY_INSERTCHECKPOINT = 7,
-	QUERY_SELECTCHECKPOINT = 8,
-	QUERy_DELETECHECKPOINT = 9
+	QUERY_DELETEZONE = 4,
+	QUERY_INSERTRECORD = 5,
+	QUERY_SELECTRECORD = 6,
+	QUERY_DELETERECORD = 7,
+	QUERY_INSERTCHECKPOINT = 8,
+	QUERY_SELECTCHECKPOINT = 9,
+	QUERY_DELETECHECKPOINT = 10
+}
+
+enum {
+	ZONE_UNDEFINED = -1,
+	ZONE_CHECKPOINT = 0,
+	ZONE_START = 1,
+	ZONE_END = 2
 }
 
 methodmap Query < StringMap {

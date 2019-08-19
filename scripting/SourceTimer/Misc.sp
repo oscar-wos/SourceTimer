@@ -1,6 +1,8 @@
 bool Misc_CheckPlayer(int iClient, int iType, bool bMessage = false) {
 	char[] cBuffer = new char[512];
 
+	if (iClient >= MaxClients || iClient < 0) return false;
+
 	if (iType >= PLAYER_ALIVE) if (!IsPlayerAlive(iClient)) {
 		if (bMessage) { Format(cBuffer, 512, "%s%s%t", TEXT_PREFIX, TEXT_DEFAULT, "check_alive", TEXT_HIGHLIGHT, TEXT_DEFAULT); Timer_CommandReply(iClient, cBuffer); }
 		return false;

@@ -29,7 +29,7 @@
 #define HUD_SHOWPREVIOUS 5.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.14"
+#define PLUGIN_VERSION "0.15"
 
 #include <sourcemod>
 #include <sdktools>
@@ -61,6 +61,8 @@ public void OnPluginStart() {
 	LoadTranslations("sourcetimer.phrases");
 
 	RegConsoleCmd("sm_addzone", Command_AddZone);
+	RegConsoleCmd("sm_editzone", Command_EditZone);
+	RegConsoleCmd("sm_deletezone", Command_DeleteZone);
 	RegConsoleCmd("sm_test", Command_Test);
 
 	for (int i = 1; i <= MaxClients; i++) {

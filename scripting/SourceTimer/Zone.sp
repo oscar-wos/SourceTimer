@@ -1,10 +1,3 @@
-enum {
-	ZONE_UNDEFINED = -1,
-	ZONE_CHECKPOINT = 0,
-	ZONE_START = 1,
-	ZONE_END = 2
-}
-
 void Zone_Draw(float xPos[3], float yPos[3], int iColor, float fDisplay, bool bAll, int iClient = 0) {
 	float fPoints[8][3];
 
@@ -77,13 +70,54 @@ void Zone_DrawLine(float xPos[3], float yPos[3], int iColor[4], float fDisplay, 
 	else TE_SendToClient(iClient);
 }
 
-void Zone_NewZone(float xPos[3], float yPos[3], int iType, int iGroup) {
-	Zone_AddZone(xPos, yPos, iType, iGroup);
-	Sql_AddZone(xPos, yPos, iType, iGroup, g_Global.Zones.Length - 1);
+void Zone_New(float xPos[3], float yPos[3], int iType, int iGroup, int iId) {
+	if (iId != 0) {
+		if (iType == ZONE_START || iType == ZONE_END) {
+			if (g_Global.Zones.FindSingleZone(iType, iGroup) != -1) {
+				Zone zZone;
+				g_Global.Zones.GetArray(g_Global.Zones.FindSingleZone(iType, iGroup), zZone);
+				Zone_DeleteZone(iId);
+				Sql_DeleteZone(iId);
+				iId = zZone.Id;
+			}
+		}
+		Zone_UpdateZone(xPos, yPos, iType, iGroup, iId);
+		Sql_UpdateZone(xPos, yPos, iType, iGroup, iId);
+	} else {
+		if (iType == ZONE_START || iType == ZONE_END) {
+			if (g_Global.Zones.FindSingleZone(iType, iGroup) != -1) {
+				Zone zZone;
+				g_Global.Zones.GetArray(g_Global.Zones.FindSingleZone(iType, iGroup), zZone);
+				Zone_New(xPos, yPos, iType, iGroup, zZone.Id); return;
+			}
+		}
+		Zone_AddZone(xPos, yPos, iType, iGroup);
+		Sql_AddZone(xPos, yPos, iType, iGroup, g_Global.Zones.Length - 1);
+	}
 	Zone_Reload();
 }
 
-void Zone_AddZone(float xPos[3], float yPos[3], int iType, int iGroup, int iId = -1) {
+void Zone_DeleteZone(int iId) {
+	int iIndex = g_Global.Zones.FindByZoneId(iId);
+	if (iIndex == -1) return;
+	g_Global.Zones.Erase(iIndex);
+}
+
+void Zone_UpdateZone(float xPos[3], float yPos[3], int iType, int iGroup, int iId) {
+	int iIndex = g_Global.Zones.FindByZoneId(iId);
+	if (iIndex == -1) return;
+
+	Zone zZone;
+	g_Global.Zones.GetArray(iIndex, zZone);
+
+	zZone.SetX(xPos);
+	zZone.SetY(yPos);
+	zZone.Type = iType;
+	zZone.Group = iGroup;
+	g_Global.Zones.SetArray(iIndex, zZone);
+}
+
+void Zone_AddZone(float xPos[3], float yPos[3], int iType, int iGroup, int iId = 0) {
 	Zone zZone;
 
 	zZone.SetX(xPos);
@@ -91,7 +125,6 @@ void Zone_AddZone(float xPos[3], float yPos[3], int iType, int iGroup, int iId =
 	zZone.Type = iType;
 	zZone.Group = iGroup;
 	zZone.Id = iId;
-
 	for (int i = 0; i <= MaxClients; i++) zZone.RecordIndex[i] = -1;
 	g_Global.Zones.PushArray(zZone);
 }
@@ -140,6 +173,11 @@ void Zone_Reload() {
 			else if (fVecMax[k] < 0.0) fVecMax[k] *= -1;
 		}
 
+		for (int k = 0; k < 2; k++) {
+			fVecMin[k] += 16.0;
+			fVecMax[k] -= 16.0;
+		}
+
 		SetEntPropVector(iEntity, Prop_Send, "m_vecMins", fVecMin);
 		SetEntPropVector(iEntity, Prop_Send, "m_vecMaxs", fVecMax);
 
@@ -152,6 +190,7 @@ void Zone_Reload() {
 }
 
 public Action Entity_StartTouch(int iCaller, int iActivator) {
+	if (!Misc_CheckPlayer(iActivator, PLAYER_INGAME)) return;
 	char[] cEntityName = new char[512];
 	char[] cEntityIndex = new char[16];
 	int iIndex;
@@ -175,6 +214,7 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 			if (gP_Player[iActivator].Record.Group != zZone.Group) return;
 
 			gP_Player[iActivator].Record.EndTime = GetGameTime() - gP_Player[iActivator].Record.StartTime;
+			gP_Player[iActivator].Record.StartTime = 0.0;
 
 			float fServerTime, fPersonalTime;
 			if (zZone.RecordIndex[0] != -1) {
@@ -270,7 +310,7 @@ public Action Entity_StartTouch(int iCaller, int iActivator) {
 }
 
 public Action Entity_EndTouch(int iCaller, int iActivator) {
-	if (!Misc_CheckPlayer(iActivator, PLAYER_INGAME)) { return; }
+	if (!Misc_CheckPlayer(iActivator, PLAYER_INGAME)) return;
 	char[] cEntityName = new char[512];
 	char[] cEntityIndex = new char[16];
 	int iIndex;

@@ -25,7 +25,7 @@ void T_Connect(Database dStorage, const char[] cError, any aData) {
 void Sql_CreateTables() {
 	for (int i = 0; i < sizeof(g_SqlTables); i++) {
 		Query qQuery = new Query();
-		qQuery.Type = view_as<int>(QUERY_CREATETABLE);
+		qQuery.Type = QUERY_CREATETABLE;
 
 		if (g_Global.IsMySql) qQuery.SetQuery(g_SqlTables[i]);
 		else qQuery.SetQuery(g_SqlLiteTables[i]);
@@ -44,9 +44,61 @@ void Sql_AddZone(float xPos[3], float yPos[3], int iType, int iGroup, int iIndex
 
 	Format(cBuffer, 512, "INSERT INTO `zones` ('mapname', 'type', 'group', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2') VALUES ('%s', %i, %i, %f, %f, %f, %f, %f, %f);", cMapName, iType, iGroup, xPos[0], xPos[1], xPos[2], yPos[0], yPos[1], yPos[2]);
 	qQuery.SetQuery(cBuffer);
-	qQuery.Type = view_as<int>(QUERY_INSERTZONE);
+	qQuery.Type = QUERY_INSERTZONE;
 	qQuery.Index = iIndex;
 
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_UpdateZone(float xPos[3], float yPos[3], int iType, int iGroup, int iZoneId) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+
+	if (g_Global.IsMySql) Format(cBuffer, 512, "UPDATE `zones` SET `type` = %i, `group` = %i, `x0` = %f, `x1` = %f, `x2` = %f, `y0` = %f, `y1` = %f, `y2` = %f WHERE `id` = %i", iType, iGroup, xPos[0], xPos[1], xPos[2], yPos[0], yPos[1], yPos[2], iZoneId);
+	else Format(cBuffer, 512, "UPDATE `zones` SET `type` = %i, `group` = %i, `x0` = %f, `x1` = %f, `x2` = %f, `y0` = %f, `y1` = %f, `y2` = %f WHERE `rowid` = %i", iType, iGroup, xPos[0], xPos[1], xPos[2], yPos[0], yPos[1], yPos[2], iZoneId);
+
+	qQuery.SetQuery(cBuffer);
+	qQuery.Type = QUERY_UPDATEZONE;
+
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_DeleteZone(int iZoneId) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+
+	if (g_Global.IsMySql) Format(cBuffer, 512, "DELETE FROM `zones` WHERE `id` = %i", iZoneId);
+	else Format(cBuffer, 512, "DELETE FROM `zones` WHERE `rowid` = %i", iZoneId);
+
+	qQuery.SetQuery(cBuffer);
+	qQuery.Type = QUERY_DELETEZONE;
+
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_AddRecord(int iClient, int iStyle, int iGroup, float fTime, Checkpoints cCheckpoints) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+	char[] cMapName = new char[64];
+
+	GetCurrentMap(cBuffer, 512);
+	g_Global.Storage.Escape(cBuffer, cMapName, 64);
+	int iClientId = GetSteamAccountID(iClient);
+
+	Format(cBuffer, 512, "INSERT INTO `records` ('mapname', 'playerid', 'style', 'group', 'time') VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
+	qQuery.SetQuery(cBuffer);
+	qQuery.Type = QUERY_INSERTRECORD;
+	qQuery.Checkpoints = cCheckpoints;
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_AddCheckpoint(int iRecordId, int iZoneId, float fTime) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+
+	Format(cBuffer, 512, "INSERT INTO `checkpoints` ('recordid', 'zoneid', 'time') VALUES (%i, %i, %f);", iRecordId, iZoneId, fTime);
+	qQuery.SetQuery(cBuffer);
+	qQuery.Type = QUERY_INSERTCHECKPOINT;
 	g_Global.Queries.Push(qQuery);
 }
 
@@ -62,63 +114,9 @@ void Sql_SelectZones() {
 	else Format(cBuffer, 512, "SELECT `rowid`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2` FROM `zones` WHERE `mapname`='%s';", cMapName);
 
 	qQuery.SetQuery(cBuffer);
-	qQuery.Type = view_as<int>(QUERY_SELECTZONE);
+	qQuery.Type = QUERY_SELECTZONE;
 	g_Global.Queries.Push(qQuery);
 }
-
-void Sql_AddRecord(int iClient, int iStyle, int iGroup, float fTime, Checkpoints cCheckpoints) {
-	Query qQuery = new Query();
-	char[] cBuffer = new char[512];
-	char[] cMapName = new char[64];
-
-	GetCurrentMap(cBuffer, 512);
-	g_Global.Storage.Escape(cBuffer, cMapName, 64);
-	int iClientId = GetSteamAccountID(iClient);
-
-	Format(cBuffer, 512, "INSERT INTO `records` ('mapname', 'playerid', 'style', 'group', 'time') VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
-	qQuery.SetQuery(cBuffer);
-	qQuery.Type = view_as<int>(QUERY_INSERTRECORD);
-	qQuery.Checkpoints = cCheckpoints;
-	g_Global.Queries.Push(qQuery);
-}
-
-void Sql_AddCheckpoint(int iRecordId, int iZoneId, float fTime) {
-	Query qQuery = new Query();
-	char[] cBuffer = new char[512];
-
-	Format(cBuffer, 512, "INSERT INTO `checkpoints` ('recordid', 'zoneid', 'time') VALUES (%i, %i, %f);", iRecordId, iZoneId, fTime);
-	qQuery.SetQuery(cBuffer);
-	qQuery.Type = view_as<int>(QUERY_INSERTCHECKPOINT);
-	g_Global.Queries.Push(qQuery);
-}
-
-/*
-void Sql_AddRecord(int iClient, Checkpoints cCheckpoints) {
-	Query qQuery = new Query();
-	char[] cBuffer = new char[512];
-	char[] cMapName = new char[64];
-
-	GetCurrentMap(cBuffer, 512);
-	g_Global.Storage.Escape(cBuffer, cMapName, 64);
-
-	Format(cBuffer, 512, "INSERT INTO `records` ('mapname', 'style', 'group', 'time') VALUES ('%s', %i, %i, %f)", cBuffer, iStyle, iGroup, fTime);
-	qQuery.SetQuery(cBuffer);
-	qQuery.Type = view_as<int>(QUERY_INSERTRECORD);
-	qQuery.Client = iClient;
-	qQuery.Checkpoints = cCheckpoints;
-	g_Global.Queries.Push(qQuery);
-}
-
-void Sql_AddCheckpoint(int iRecordId, int iZoneId, float fTime) {
-	Query qQuery = new Query();
-	char[] cBuffer = new char[512];
-
-	Format(cBuffer, 512, "INSERT INTO `records` ('recordid', 'zoneid', 'time') VALUES (%i, %i, %f)", iRecordId, iZoneId, fTime);
-	qQuery.SetQuery(cBuffer);
-	qQuery.Type = view_as<int>(QUERY_INSERTCHECKPOINT);
-	g_Global.Queries.Push(qQuery);
-}
-*/
 
 void Sql_Timer() {
 	if (g_Global.Queries.Length == 0) return;
@@ -158,6 +156,7 @@ void T_Success(Database dStorage, any aData, int iQueries, DBResultSet[] rResult
 					}
 
 					Zone_AddZone(xPos, yPos, rResults[i].FetchInt(1), rResults[i].FetchInt(2), rResults[i].FetchInt(0));
+					// Sql_LoadRecord(rResults[i].FetchInt(0));
 				}
 
 				Zone_Reload();

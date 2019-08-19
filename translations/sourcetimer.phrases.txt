@@ -11,9 +11,29 @@
 		"en"		"Add Zone"
 	}
 
+	"menu_editzone"
+	{
+		"en"		"Edit Zone"
+	}
+
+	"menu_editzone_select"
+	{
+		"en"		"Edit Selected Zone"
+	}
+
 	"menu_addzone_saveregion"
 	{
 		"en"		"Save Region"
+	}
+
+	"menu_editzone_updateregion"
+	{
+		"en"		"Update Region"
+	}
+
+	"menu_editzone_alreadyexists"
+	{
+		"en"		"This region type already exists for this group"
 	}
 
 	"menu_addzone_editp1"
@@ -89,6 +109,11 @@
 	"menu_delzone"
 	{
 		"en"		"Delete Zone"
+	}
+
+	"menu_editzone_nozones"
+	{
+		"en"		"This map has no zones"
 	}
 
 	"check_ingame"
