@@ -31,7 +31,7 @@
 #define HUD_SHOWPREVIOUS 5.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.17"
+#define PLUGIN_VERSION "0.18"
 
 #include <sourcemod>
 #include <sdktools>
@@ -63,6 +63,7 @@ public void OnPluginStart() {
 	LoadTranslations("sourcetimer.phrases");
 
 	Admin_Start();
+	Zone_Start();
 	RegConsoleCmd("sm_test", Command_Test);
 
 	for (int i = 1; i <= MaxClients; i++) {
@@ -71,14 +72,35 @@ public void OnPluginStart() {
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
 	}
+
+	HookEvent("round_start", Event_RoundStart);
+}
+
+Action Event_RoundStart(Event eEvent, const char[] cName, bool bDontBroadcast) {
+	Zone_Reload();
 }
 
 public Action Command_Test(int iClient, int iArgs) {
+	SetEntityMoveType(iClient, GetEntityMoveType(iClient) == MOVETYPE_NOCLIP ? MOVETYPE_WALK : MOVETYPE_NOCLIP);
 	PrintToChatAll("%i", g_Global.Records.Length);
 }
 
 public void OnMapStart() {
 	Misc_PrecacheModels();
+	Sql_SelectZones();
+}
+
+public void OnMapEnd() {
+	g_Global.Zones.Clear();
+	g_Global.Records.Clear();
+	g_Global.Checkpoints.Clear();
+
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) continue;
+		gP_Player[i].Checkpoints.Clear();
+		gP_Player[i].RecordCheckpoints.Clear();
+		gP_Player[i].Records.Clear();
+	}
 }
 
 public void OnClientPostAdminCheck(int iClient) {
@@ -98,7 +120,7 @@ public void OnClientPostAdminCheck(int iClient) {
 	}
 }
 
-public void OnClientDisconnect(int iClient) {
+public void OnClientDisconnect_Post(int iClient) {
 	delete gP_Player[iClient].Checkpoints;
 	delete gP_Player[iClient].RecordCheckpoints;
 	delete gP_Player[iClient].Records;

@@ -138,4 +138,9 @@
 		"#format"	"{1:s},{2:i},{3:s}"
 		"en"		"There are {1}{2} {3}zone/s on this map"
 	}
+
+	"check_zonenotfound"
+	{
+		"en"		"Zone not found"
+	}
 }

@@ -32,11 +32,11 @@ enum {
 Admin gA_Admin[MAXPLAYERS + 1];
 
 void Admin_Start() {
-	RegConsoleCmd("sm_admin", Command_Admin);
-	RegConsoleCmd("sm_zone", Command_Zone);
-	RegConsoleCmd("sm_addzone", Command_AddZone);
-	RegConsoleCmd("sm_editzone", Command_EditZone);
-	RegConsoleCmd("sm_deletezone", Command_DeleteZone);
+	RegAdminCmd("sm_admin", Command_Admin, ADMFLAG_ROOT);
+	RegAdminCmd("sm_zone", Command_Zone, ADMFLAG_ROOT);
+	RegAdminCmd("sm_addzone", Command_AddZone, ADMFLAG_ROOT);
+	RegAdminCmd("sm_editzone", Command_EditZone, ADMFLAG_ROOT);
+	RegAdminCmd("sm_deletezone", Command_DeleteZone, ADMFLAG_ROOT);
 }
 
 public Action Command_Admin(int iClient, int iArgs) {

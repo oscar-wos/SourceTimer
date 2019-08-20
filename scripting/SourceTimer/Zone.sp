@@ -1,3 +1,28 @@
+void Zone_Start() {
+	RegConsoleCmd("sm_r", Command_Restart);
+}
+
+public Action Command_Restart(int iClient, int iArgs) {
+	if (!Misc_CheckPlayer(iClient, PLAYER_INGAME)) return Plugin_Handled;
+
+	int iIndex = g_Global.Zones.FindSingleZone(1, 0);
+	if (iIndex == -1) {
+		char[] cBuffer = new char[512];
+		Format(cBuffer, 512, "%s%s%t", TEXT_PREFIX, TEXT_DEFAULT, "check_zonenotfound");
+		Timer_CommandReply(iClient, cBuffer);
+		return Plugin_Handled;
+	}
+
+	float xPos[3], yPos[3], fCentre[3];
+	Zone zZone; g_Global.Zones.GetArray(iIndex, zZone);
+	zZone.GetX(xPos);
+	zZone.GetY(yPos);
+	Misc_CalculateCentre(xPos, yPos, fCentre);
+	gP_Player[iClient].Record.StartTime = -1.0;
+	TeleportEntity(iClient, fCentre, NULL_VECTOR, NULL_VECTOR);
+	return Plugin_Handled;
+}
+
 void Zone_Draw(float xPos[3], float yPos[3], int iColor, float fDisplay, bool bAll, int iClient = 0) {
 	float fPoints[8][3];
 
@@ -356,8 +381,8 @@ void Zone_Message(int iClient, float fTime, float fServerTime, float fPersonalTi
 
 	Misc_FormatTimePrefix(fServerTime, fServerTime - fTime, cServerDiff, sizeof(cServerDiff));
 	Misc_FormatTimePrefix(fPersonalTime, fPersonalTime - fTime, cPersonalDiff, sizeof(cPersonalDiff));
-	PrintToChatAll("%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
-	// PrintToChat(iClient, "%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
+	// PrintToChatAll("%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
+	PrintToChat(iClient, "%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
 }
 
 void Zone_Timer() {
@@ -382,7 +407,7 @@ void Zone_Timer() {
 Action Zone_Run(int iClient, int& iButtons) {
 	if (gP_Player[iClient].CurrentZone == ZONE_START) {
 		if (gP_Player[iClient].Record.StartTime == -1.0) if (GetEntityFlags(iClient) & FL_ONGROUND) gP_Player[iClient].Record.StartTime = 0.0;
-		if (gP_Player[iClient].Record.StartTime == 0.0) if (!(GetEntityFlags(iClient) & FL_ONGROUND)) gP_Player[iClient].Record.StartTime = GetGameTime();
+		if (gP_Player[iClient].Record.StartTime == 0.0) if (!(GetEntityFlags(iClient) & FL_ONGROUND) && (iButtons & IN_JUMP)) gP_Player[iClient].Record.StartTime = GetGameTime();
 		if (GetEntityFlags(iClient) & FL_ONGROUND) gP_Player[iClient].Record.StartTime = 0.0;
 	}
 
