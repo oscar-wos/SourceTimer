@@ -104,7 +104,6 @@ enum struct Record {
 	float EndTime;
 	int Group;
 	int Style;
-	int Time;
 	int Id;
 }
 
@@ -262,6 +261,11 @@ methodmap Query < StringMap {
 	property int Index {
 		public get() { int iIndex; this.GetValue("index", iIndex); return iIndex; }
 		public set(int iIndex) { this.SetValue("index", iIndex); }
+	}
+
+	property int Client {
+		public get() { int iClient; this.GetValue("client", iClient); return iClient; }
+		public set(int iClient) { this.SetValue("client", iClient); }
 	}
 
 	property Checkpoints Checkpoints {

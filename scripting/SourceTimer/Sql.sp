@@ -44,9 +44,8 @@ void Sql_AddZone(float xPos[3], float yPos[3], int iType, int iGroup, int iIndex
 
 	Format(cBuffer, 512, "INSERT INTO `zones` ('mapname', 'type', 'group', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2') VALUES ('%s', %i, %i, %f, %f, %f, %f, %f, %f);", cMapName, iType, iGroup, xPos[0], xPos[1], xPos[2], yPos[0], yPos[1], yPos[2]);
 	qQuery.SetQuery(cBuffer);
-	qQuery.Type = QUERY_INSERTZONE;
 	qQuery.Index = iIndex;
-
+	qQuery.Type = QUERY_INSERTZONE;
 	g_Global.Queries.Push(qQuery);
 }
 
@@ -59,46 +58,6 @@ void Sql_UpdateZone(float xPos[3], float yPos[3], int iType, int iGroup, int iZo
 
 	qQuery.SetQuery(cBuffer);
 	qQuery.Type = QUERY_UPDATEZONE;
-
-	g_Global.Queries.Push(qQuery);
-}
-
-void Sql_DeleteZone(int iZoneId) {
-	Query qQuery = new Query();
-	char[] cBuffer = new char[512];
-
-	if (g_Global.IsMySql) Format(cBuffer, 512, "DELETE FROM `zones` WHERE `id` = %i", iZoneId);
-	else Format(cBuffer, 512, "DELETE FROM `zones` WHERE `rowid` = %i", iZoneId);
-
-	qQuery.SetQuery(cBuffer);
-	qQuery.Type = QUERY_DELETEZONE;
-
-	g_Global.Queries.Push(qQuery);
-}
-
-void Sql_AddRecord(int iClient, int iStyle, int iGroup, float fTime, Checkpoints cCheckpoints) {
-	Query qQuery = new Query();
-	char[] cBuffer = new char[512];
-	char[] cMapName = new char[64];
-
-	GetCurrentMap(cBuffer, 512);
-	g_Global.Storage.Escape(cBuffer, cMapName, 64);
-	int iClientId = GetSteamAccountID(iClient);
-
-	Format(cBuffer, 512, "INSERT INTO `records` ('mapname', 'playerid', 'style', 'group', 'time') VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
-	qQuery.SetQuery(cBuffer);
-	qQuery.Type = QUERY_INSERTRECORD;
-	qQuery.Checkpoints = cCheckpoints;
-	g_Global.Queries.Push(qQuery);
-}
-
-void Sql_AddCheckpoint(int iRecordId, int iZoneId, float fTime) {
-	Query qQuery = new Query();
-	char[] cBuffer = new char[512];
-
-	Format(cBuffer, 512, "INSERT INTO `checkpoints` ('recordid', 'zoneid', 'time') VALUES (%i, %i, %f);", iRecordId, iZoneId, fTime);
-	qQuery.SetQuery(cBuffer);
-	qQuery.Type = QUERY_INSERTCHECKPOINT;
 	g_Global.Queries.Push(qQuery);
 }
 
@@ -115,6 +74,69 @@ void Sql_SelectZones() {
 
 	qQuery.SetQuery(cBuffer);
 	qQuery.Type = QUERY_SELECTZONE;
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_DeleteZone(int iZoneId) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+
+	if (g_Global.IsMySql) Format(cBuffer, 512, "DELETE FROM `zones` WHERE `id` = %i", iZoneId);
+	else Format(cBuffer, 512, "DELETE FROM `zones` WHERE `rowid` = %i", iZoneId);
+
+	qQuery.SetQuery(cBuffer);
+	qQuery.Type = QUERY_DELETEZONE;
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_AddRecord(int iClient, int iStyle, int iGroup, float fTime, Checkpoints cCheckpoints) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+	char[] cMapName = new char[64];
+
+	GetCurrentMap(cBuffer, 512);
+	g_Global.Storage.Escape(cBuffer, cMapName, 64);
+	int iClientId = GetSteamAccountID(iClient);
+
+	Format(cBuffer, 512, "INSERT INTO `records` ('mapname', 'playerid', 'style', 'group', 'time') VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
+	qQuery.SetQuery(cBuffer);
+	qQuery.Checkpoints = cCheckpoints;
+	qQuery.Type = QUERY_INSERTRECORD;
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_SelectRecord(int iIndex, int iGroup, int iClient = 0) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+	char[] cMapName = new char[64];
+
+	GetCurrentMap(cBuffer, 512);
+	g_Global.Storage.Escape(cBuffer, cMapName, 64);
+
+	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `id`, `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
+	else Format(cBuffer, 512, "SELECT `rowid`, `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
+
+	if (iClient != 0) {
+		int iClientId = GetSteamAccountID(iClient);
+		Format(cBuffer, 512, "%s AND `playerid`=%i", cBuffer, iClientId);
+		qQuery.Client = GetClientUserId(iClient);
+	}
+
+	Format(cBuffer, 512, "%s ORDER BY `time` ASC", cBuffer);
+
+	qQuery.SetQuery(cBuffer);
+	qQuery.Index = iIndex;
+	qQuery.Type = QUERY_SELECTRECORD;
+	g_Global.Queries.Push(qQuery);
+}
+
+void Sql_AddCheckpoint(int iRecordId, int iZoneId, float fTime) {
+	Query qQuery = new Query();
+	char[] cBuffer = new char[512];
+
+	Format(cBuffer, 512, "INSERT INTO `checkpoints` ('recordid', 'zoneid', 'time') VALUES (%i, %i, %f);", iRecordId, iZoneId, fTime);
+	qQuery.SetQuery(cBuffer);
+	qQuery.Type = QUERY_INSERTCHECKPOINT;
 	g_Global.Queries.Push(qQuery);
 }
 
@@ -149,16 +171,20 @@ void T_Success(Database dStorage, any aData, int iQueries, DBResultSet[] rResult
 
 				for (int k = 0; k < rResults[i].RowCount; k++) {
 					rResults[i].FetchRow();
-
 					for (int l = 0; l < 3; l++) {
 						xPos[l] = rResults[i].FetchFloat(3 + l);
 						yPos[l] = rResults[i].FetchFloat(6 + l);
 					}
-
 					Zone_AddZone(xPos, yPos, rResults[i].FetchInt(1), rResults[i].FetchInt(2), rResults[i].FetchInt(0));
-					// Sql_LoadRecord(rResults[i].FetchInt(0));
-				}
+					if (rResults[i].FetchInt(1) == ZONE_END) {
+						Sql_SelectRecord(g_Global.Zones.Length - 1, rResults[i].FetchInt(2));
 
+						for (int l = 1; l <= MaxClients; l++) {
+							if (!Misc_CheckPlayer(l, PLAYER_INGAME)) continue;
+							Sql_SelectRecord(g_Global.Zones.Length - 1, rResults[i].FetchInt(2), l);
+						}
+					}
+				}
 				Zone_Reload();
 			} case QUERY_INSERTRECORD: {
 				for (int k = 0; k < qQuery[i].Checkpoints.Length; k++) {
@@ -166,8 +192,30 @@ void T_Success(Database dStorage, any aData, int iQueries, DBResultSet[] rResult
 					qQuery[i].Checkpoints.GetArray(k, cCheckpoint);
 					Sql_AddCheckpoint(rResults[i].InsertId, cCheckpoint.ZoneId, cCheckpoint.Time);
 				}
-
 				delete qQuery[i].Checkpoints;
+			} case QUERY_SELECTRECORD: {
+				Zone zZone;
+				int iClient = GetClientOfUserId(qQuery[i].Client);
+				g_Global.Zones.GetArray(qQuery[i].Index, zZone);
+
+				for (int k = 0; k < rResults[i].RowCount; k++) {
+					Record rRecord;
+					rResults[i].FetchRow();
+
+					rRecord.Id = rResults[i].FetchInt(0);
+					rRecord.EndTime = rResults[i].FetchFloat(1);
+					rRecord.Group = rResults[i].FetchInt(2);
+					rRecord.Style = rResults[i].FetchInt(3);
+
+					if (iClient == 0) {
+						if (k == 0) zZone.RecordIndex[0] = g_Global.Records.Length;
+						g_Global.Records.PushArray(rRecord);
+					} else {
+						if (k == 0) zZone.RecordIndex[iClient] = gP_Player[iClient].Records.Length;
+						gP_Player[iClient].Records.PushArray(rRecord);
+					}
+				}
+				g_Global.Zones.SetArray(qQuery[i].Index, zZone);
 			}
 		}
 		delete qQuery[i];

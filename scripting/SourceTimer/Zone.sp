@@ -71,29 +71,27 @@ void Zone_DrawLine(float xPos[3], float yPos[3], int iColor[4], float fDisplay, 
 }
 
 void Zone_New(float xPos[3], float yPos[3], int iType, int iGroup, int iId) {
-	if (iId != 0) {
-		if (iType == ZONE_START || iType == ZONE_END) {
-			if (g_Global.Zones.FindSingleZone(iType, iGroup) != -1) {
-				Zone zZone;
-				g_Global.Zones.GetArray(g_Global.Zones.FindSingleZone(iType, iGroup), zZone);
-				Zone_DeleteZone(iId);
-				Sql_DeleteZone(iId);
-				iId = zZone.Id;
+	if (iType == ZONE_START || iType == ZONE_END) {
+		int iIndex = g_Global.Zones.FindSingleZone(iType, iGroup);
+		if (iIndex != -1) {
+			Zone zZone;
+			g_Global.Zones.GetArray(iIndex, zZone);
+
+			if (iId != zZone.Id) {
+				Zone_DeleteZone(zZone.Id);
+				Sql_DeleteZone(zZone.Id);
 			}
 		}
+	}
+
+	if (iId != 0) {
 		Zone_UpdateZone(xPos, yPos, iType, iGroup, iId);
 		Sql_UpdateZone(xPos, yPos, iType, iGroup, iId);
 	} else {
-		if (iType == ZONE_START || iType == ZONE_END) {
-			if (g_Global.Zones.FindSingleZone(iType, iGroup) != -1) {
-				Zone zZone;
-				g_Global.Zones.GetArray(g_Global.Zones.FindSingleZone(iType, iGroup), zZone);
-				Zone_New(xPos, yPos, iType, iGroup, zZone.Id); return;
-			}
-		}
 		Zone_AddZone(xPos, yPos, iType, iGroup);
 		Sql_AddZone(xPos, yPos, iType, iGroup, g_Global.Zones.Length - 1);
 	}
+
 	Zone_Reload();
 }
 
@@ -109,6 +107,7 @@ void Zone_UpdateZone(float xPos[3], float yPos[3], int iType, int iGroup, int iI
 
 	Zone zZone;
 	g_Global.Zones.GetArray(iIndex, zZone);
+	if (zZone.Type != iType) for (int i = 0; i <= MaxClients; i++) zZone.RecordIndex[i] = -1;
 
 	zZone.SetX(xPos);
 	zZone.SetY(yPos);
@@ -119,13 +118,13 @@ void Zone_UpdateZone(float xPos[3], float yPos[3], int iType, int iGroup, int iI
 
 void Zone_AddZone(float xPos[3], float yPos[3], int iType, int iGroup, int iId = 0) {
 	Zone zZone;
+	for (int i = 0; i <= MaxClients; i++) zZone.RecordIndex[i] = -1;
 
 	zZone.SetX(xPos);
 	zZone.SetY(yPos);
 	zZone.Type = iType;
 	zZone.Group = iGroup;
 	zZone.Id = iId;
-	for (int i = 0; i <= MaxClients; i++) zZone.RecordIndex[i] = -1;
 	g_Global.Zones.PushArray(zZone);
 }
 

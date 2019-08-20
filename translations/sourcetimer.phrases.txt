@@ -1,9 +1,14 @@
 "Phrases"
 {
+	
+	"menu_admin"
+	{
+		"en"		"Admin"
+	}
 
 	"menu_zone"
 	{
-		"en"		"Zoning"
+		"en"		"Zone"
 	}
 
 	"menu_addzone"
@@ -16,104 +21,104 @@
 		"en"		"Edit Zone"
 	}
 
-	"menu_editzone_select"
-	{
-		"en"		"Edit Selected Zone"
-	}
-
-	"menu_addzone_saveregion"
-	{
-		"en"		"Save Region"
-	}
-
-	"menu_editzone_updateregion"
-	{
-		"en"		"Update Region"
-	}
-
-	"menu_editzone_alreadyexists"
-	{
-		"en"		"This region type already exists for this group"
-	}
-
-	"menu_addzone_editp1"
-	{
-		"en"		"Precise Edit (P1 - Blue)"
-	}
-
-	"menu_addzone_editp2"
-	{
-		"en"		"Precise Edit (P2 - Red)"
-	}
-
-	"menu_addzone_editx"
-	{
-		"en"		"Edit (X - Red)"
-	}
-
-	"menu_addzone_edity"
-	{
-		"en"		"Edit (Y - Green)"
-	}
-
-	"menu_addzone_editz"
-	{
-		"en"		"Edit (Z - Blue)"
-	}
-
-	"menu_addzone_type"
-	{
-		"en"		"Type"
-	}
-
-	"menu_addzone_checkpoint"
-	{
-		"en"		"Checkpoint"
-	}
-
-	"menu_addzone_start"
-	{
-		"en"		"Start"
-	}
-
-	"menu_addzone_end"
-	{
-		"en"		"End"
-	}
-
-	"menu_addzone_group"
-	{
-		"en"		"Group"
-	}
-
-	"menu_addzone_normal"
-	{
-		"en"		"Normal"
-	}
-
-	"menu_addzone_bonus"
-	{
-		"en"		"Bonus"
-	}
-
-	"menu_addzone_bonusnew"
-	{
-		"en"		"New Bonus"
-	}
-
-	"menu_editzone"
-	{
-		"en"		"Edit Zone"
-	}
-
-	"menu_delzone"
+	"menu_deletezone"
 	{
 		"en"		"Delete Zone"
 	}
 
-	"menu_editzone_nozones"
+	"menu_zoning_editp1"
 	{
-		"en"		"This map has no zones"
+		"en"		"Precise Edit (P1 - Blue)"
+	}
+
+	"menu_zoning_editp2"
+	{
+		"en"		"Precise Edit (P2 - Red)"
+	}
+
+	"menu_zoning_editx"
+	{
+		"en"		"Edit (X - Red)"
+	}
+
+	"menu_zoning_edity"
+	{
+		"en"		"Edit (Y - Green)"
+	}
+
+	"menu_zoning_editz"
+	{
+		"en"		"Edit (Z - Blue)"
+	}
+
+	"menu_saveregion"
+	{
+		"en"		"Save Region"
+	}
+
+	"menu_updateregion"
+	{
+		"en"		"Update Region"
+	}
+
+	"menu_type"
+	{
+		"en"		"Type"
+	}
+
+	"menu_checkpoint"
+	{
+		"en"		"Checkpoint"
+	}
+
+	"menu_start"
+	{
+		"en"		"Start"
+	}
+
+	"menu_end"
+	{
+		"en"		"End"
+	}
+
+	"menu_group"
+	{
+		"en"		"Group"
+	}
+
+	"menu_normal"
+	{
+		"en"		"Normal"
+	}
+
+	"menu_bonus"
+	{
+		"en"		"Bonus"
+	}
+
+	"menu_newbonus"
+	{
+		"en"		"New Bonus"
+	}
+
+	"menu_editselectzone"
+	{
+		"en"		"Edit Selected Zone"
+	}
+
+	"menu_deleteselectzone"
+	{
+		"en"		"Delete Selected Zone"
+	}
+
+	"menu_yes"
+	{
+		"en"		"Yes"
+	}
+
+	"menu_no"
+	{
+		"en"		"No"
 	}
 
 	"check_ingame"
@@ -126,5 +131,11 @@
 	{
 		"#format"	"{1:s},{2:s}"
 		"en"		"You must be {1}Alive {2}to use this command"
+	}
+
+	"check_zones"
+	{
+		"#format"	"{1:s},{2:i},{3:s}"
+		"en"		"There are {1}{2} {3}zone/s on this map"
 	}
 }

@@ -29,7 +29,7 @@
 #define HUD_SHOWPREVIOUS 5.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.15"
+#define PLUGIN_VERSION "0.16"
 
 #include <sourcemod>
 #include <sdktools>
@@ -60,9 +60,7 @@ public void OnPluginStart() {
 	ServerCommand("sm_reload_translations");
 	LoadTranslations("sourcetimer.phrases");
 
-	RegConsoleCmd("sm_addzone", Command_AddZone);
-	RegConsoleCmd("sm_editzone", Command_EditZone);
-	RegConsoleCmd("sm_deletezone", Command_DeleteZone);
+	Admin_Start();
 	RegConsoleCmd("sm_test", Command_Test);
 
 	for (int i = 1; i <= MaxClients; i++) {
@@ -76,7 +74,7 @@ public void OnPluginStart() {
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-
+	PrintToChatAll("%i", g_Global.Records.Length);
 }
 
 public void OnMapStart() {
