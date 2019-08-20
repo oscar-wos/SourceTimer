@@ -86,10 +86,10 @@ void Zone_New(float xPos[3], float yPos[3], int iType, int iGroup, int iId) {
 
 	if (iId != 0) {
 		Zone_UpdateZone(xPos, yPos, iType, iGroup, iId);
-		Sql_UpdateZone(xPos, yPos, iType, iGroup, iId);
+		Sql_UpdateZone(iId, xPos, yPos, iType, iGroup);
 	} else {
 		Zone_AddZone(xPos, yPos, iType, iGroup);
-		Sql_AddZone(xPos, yPos, iType, iGroup, g_Global.Zones.Length - 1);
+		Sql_AddZone(g_Global.Zones.Length - 1, xPos, yPos, iType, iGroup);
 	}
 
 	Zone_Reload();
@@ -356,7 +356,8 @@ void Zone_Message(int iClient, float fTime, float fServerTime, float fPersonalTi
 
 	Misc_FormatTimePrefix(fServerTime, fServerTime - fTime, cServerDiff, sizeof(cServerDiff));
 	Misc_FormatTimePrefix(fPersonalTime, fPersonalTime - fTime, cPersonalDiff, sizeof(cPersonalDiff));
-	PrintToChat(iClient, "%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
+	PrintToChatAll("%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
+	// PrintToChat(iClient, "%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
 }
 
 void Zone_Timer() {

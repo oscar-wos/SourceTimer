@@ -11,6 +11,7 @@
 * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 *
+
 * You should have received a copy of the GNU General Public License along with
 * this program. If not, see http://www.gnu.org/licenses/.
 */
@@ -18,6 +19,7 @@
 // Compiler Info: Pawn 1.10 - build 6434
 #pragma semicolon 1
 #pragma newdecls required
+#pragma dynamic 262144
 
 // Config TODO
 #define TEXT_DEFAULT "{white}"
@@ -29,7 +31,7 @@
 #define HUD_SHOWPREVIOUS 5.0
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.16"
+#define PLUGIN_VERSION "0.17"
 
 #include <sourcemod>
 #include <sdktools>
@@ -68,8 +70,6 @@ public void OnPluginStart() {
 		gP_Player[i].Checkpoints = new Checkpoints();
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
-
-		if (!Misc_CheckPlayer(i, PLAYER_ALIVE)) continue;
 	}
 }
 
@@ -82,15 +82,32 @@ public void OnMapStart() {
 }
 
 public void OnClientPostAdminCheck(int iClient) {
+	if (!Misc_CheckPlayer(iClient, PLAYER_VALID)) return;
+
 	gP_Player[iClient].Checkpoints = new Checkpoints();
 	gP_Player[iClient].RecordCheckpoints = new Checkpoints();
 	gP_Player[iClient].Records = new Records();
+
+	for (int i = 0; i < g_Global.Zones.Length; i++) {
+		Zone zZone; g_Global.Zones.GetArray(i, zZone);
+
+		switch (zZone.Type) {
+			case ZONE_END: Sql_SelectRecord(iClient, i, zZone.Group);
+			case ZONE_CHECKPOINT: Sql_SelectCheckpoint(iClient, i, zZone.Id);
+		}
+	}
 }
 
 public void OnClientDisconnect(int iClient) {
 	delete gP_Player[iClient].Checkpoints;
 	delete gP_Player[iClient].RecordCheckpoints;
 	delete gP_Player[iClient].Records;
+
+	for (int i = 0; i < g_Global.Zones.Length; i++) {
+		Zone zZone; g_Global.Zones.GetArray(i, zZone);
+		zZone.RecordIndex[iClient] = -1;
+		g_Global.Zones.SetArray(i, zZone);
+	}
 }
 
 public Action Timer_Global(Handle hTimer) {
