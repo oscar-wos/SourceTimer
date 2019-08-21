@@ -54,3 +54,33 @@ void Misc_FormatTimePrefix(float fTime, float fDiff, char[] cBuffer, int iMaxLen
 	else if (fDiff > 0) Format(cBuffer, iMaxLength, "\x06+%s\x01", cBuffer);
 	else Format(cBuffer, iMaxLength, "\x07-%s\x01", cBuffer);
 }
+
+Action Misc_Run(int iClient) {
+	if (IsClientObserver(iClient)) {
+		int iClientSpecMode = GetEntProp(iClient, Prop_Send, "m_iObserverMode");
+
+		if (iClientSpecMode == 4 || iClientSpecMode == 5) {
+			int iTarget = GetEntPropEnt(iClient, Prop_Send, "m_hObserverTarget");
+			Misc_ShowHud(iClient, iTarget);
+		}
+	} else {
+		Misc_ShowHud(iClient, iClient);
+	}
+}
+
+void Misc_ShowHud(int iClient, int iTarget) {
+	if (gP_Player[iTarget].Record.StartTime > 0.0) {
+		char[] cBuffer = new char[4096];
+		char cTime[32];
+
+		Misc_FormatTime(gP_Player[iTarget].Record.StartTime - GetGameTime(), cTime, sizeof(cTime));
+		FormatEx(cBuffer, 4096, "Time: %s", cTime);
+		PrintHintText(iClient, cBuffer);
+	}
+}
+
+void Misc_StartTimer(int iClient) {
+	gP_Player[iClient].Record.StartTime = GetGameTime();
+	gP_Player[iClient].RecentlyAbused = false;
+	gP_Player[iClient].Replay.Frame = 0;
+}

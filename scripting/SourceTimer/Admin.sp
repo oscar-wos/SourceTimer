@@ -389,7 +389,7 @@ void Admin_Timer() {
 	}
 }
 
-void Admin_Run(int iClient, int iButtons) {
+Action Admin_Run(int iClient, int iButtons) {
 	if (!(iButtons & IN_ATTACK || iButtons & IN_ATTACK2)) return;
 
 	switch (gA_Admin[iClient].Option) {

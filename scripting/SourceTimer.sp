@@ -29,9 +29,10 @@
 #define TIMER_ZONES 16
 #define BOX_BOUNDRY 120.0
 #define HUD_SHOWPREVIOUS 5.0
+#define BOTS_MAX 2
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.18"
+#define PLUGIN_VERSION "0.19"
 
 #include <sourcemod>
 #include <sdktools>
@@ -42,7 +43,10 @@ Global g_Global;
 Player gP_Player[MAXPLAYERS + 1];
 
 #include "SourceTimer/Admin.sp"
+#include "SourceTimer/Event.sp"
+#include "SourceTimer/Hook.sp"
 #include "SourceTimer/Misc.sp"
+#include "SourceTimer/Replay.sp"
 #include "SourceTimer/Sql.sp"
 #include "SourceTimer/Zone.sp"
 
@@ -62,27 +66,27 @@ public void OnPluginStart() {
 	ServerCommand("sm_reload_translations");
 	LoadTranslations("sourcetimer.phrases");
 
-	Admin_Start();
-	Zone_Start();
-	RegConsoleCmd("sm_test", Command_Test);
-
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!Misc_CheckPlayer(i, PLAYER_INGAME)) continue;
 		gP_Player[i].Checkpoints = new Checkpoints();
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
+		gP_Player[i].Replay = new Replay();
+
+		SDKHook(i, SDKHook_OnTakeDamage, Hook_OnTakeDamage);
 	}
 
 	HookEvent("round_start", Event_RoundStart);
-}
+	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
+	RegConsoleCmd("sm_test", Command_Test);
 
-Action Event_RoundStart(Event eEvent, const char[] cName, bool bDontBroadcast) {
-	Zone_Reload();
+	Admin_Start();
+	Replay_Start();
+	Zone_Start();
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-	SetEntityMoveType(iClient, GetEntityMoveType(iClient) == MOVETYPE_NOCLIP ? MOVETYPE_WALK : MOVETYPE_NOCLIP);
-	PrintToChatAll("%i", g_Global.Records.Length);
+	PrintToChatAll("%i", gP_Player[iClient].Replay.Frames.Length);
 }
 
 public void OnMapStart() {
@@ -109,6 +113,7 @@ public void OnClientPostAdminCheck(int iClient) {
 	gP_Player[iClient].Checkpoints = new Checkpoints();
 	gP_Player[iClient].RecordCheckpoints = new Checkpoints();
 	gP_Player[iClient].Records = new Records();
+	gP_Player[iClient].Replay = new Replay();
 
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
 		Zone zZone; g_Global.Zones.GetArray(i, zZone);
@@ -118,6 +123,8 @@ public void OnClientPostAdminCheck(int iClient) {
 			case ZONE_CHECKPOINT: Sql_SelectCheckpoint(iClient, i, zZone.Id);
 		}
 	}
+
+	SDKHook(iClient, SDKHook_OnTakeDamage, Hook_OnTakeDamage);
 }
 
 public void OnClientDisconnect_Post(int iClient) {
@@ -125,11 +132,16 @@ public void OnClientDisconnect_Post(int iClient) {
 	delete gP_Player[iClient].RecordCheckpoints;
 	delete gP_Player[iClient].Records;
 
+	delete gP_Player[iClient].Replay.Frames;
+	delete gP_Player[iClient].Replay;
+
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
 		Zone zZone; g_Global.Zones.GetArray(i, zZone);
 		zZone.RecordIndex[iClient] = -1;
 		g_Global.Zones.SetArray(i, zZone);
 	}
+
+	SDKUnhook(iClient, SDKHook_OnTakeDamage, Hook_OnTakeDamage);
 }
 
 public Action Timer_Global(Handle hTimer) {
@@ -138,8 +150,10 @@ public Action Timer_Global(Handle hTimer) {
 	Zone_Timer();
 }
 
-public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngles[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
+public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fVel[3], float fAngle[3], int& iWeapon, int& iSubtype, int& iCmd, int& iTick, int& iSeed, int iMouse[2]) {
 	Admin_Run(iClient, iButtons);
+	Misc_Run(iClient);
+	Replay_Run(iClient, iButtons, fVel, fAngle);
 	Zone_Run(iClient, iButtons);
 	return Plugin_Changed;
 }

@@ -182,14 +182,66 @@ methodmap Zones < ArrayList {
 	}
 }
 
+enum struct ReplayFrame {
+	float fPos[3];
+	float fAngle[3];
+	float fVel[3];
+	int Buttons;
+
+	void GetPos(float fVec[3]) {
+		for (int i = 0; i < 3; i++) fVec[i] = this.fPos[i];
+	}
+
+	void GetAngle(float fVec[3]) {
+		for (int i = 0; i < 3; i++) fVec[i] = this.fAngle[i];
+	}
+
+	void GetVel(float fVec[3]) {
+		for (int i = 0; i < 3; i++) fVec[i] = this.fVel[i];
+	}
+
+	void SetPos(float fVec[3]) {
+		for (int i = 0; i < 3; i++) this.fPos[i] = fVec[i];
+	}
+
+	void SetAngle(float fVec[3]) {
+		for (int i = 0; i < 3; i++) this.fAngle[i] = fVec[i];
+	}
+
+	void SetVel(float fVec[3]) {
+		for (int i = 0; i < 3; i++) this.fVel[i] = fVec[i];
+	}
+}
+
+methodmap Replay < StringMap {
+	public Replay() {
+		StringMap smMap = new StringMap();
+
+		smMap.SetValue("frames", new ArrayList(sizeof(ReplayFrame)));
+		return view_as<Replay>(smMap);
+	}
+
+	property ArrayList Frames {
+		public get() { ArrayList alFrames; this.GetValue("frames", alFrames); return alFrames; }
+		public set(ArrayList alFrames) { this.SetValue("frames", alFrames); }
+	}
+
+	property int Frame {
+		public get() { int iFrame; this.GetValue("frame", iFrame); return iFrame; }
+		public set(int iFrame) { this.SetValue("frame", iFrame); }
+	}
+}
+
 enum struct Player {
 	Checkpoints RecordCheckpoints;
 	Records Records;
 
 	Checkpoints Checkpoints;
 	Record Record;
+	Replay Replay;
 	int CurrentZone;
 	int Style;
+	bool RecentlyAbused;
 }
 
 methodmap Models < StringMap {

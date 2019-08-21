@@ -1,7 +1,7 @@
 char g_SqlTables[][] = {
-	"CREATE TABLE IF NOT EXISTS `zones` (`id` INT AUTO_INCREMENT, `mapname` VARCHAR(64)`, `type` INT, `group` INT, `x0` FLOAT, `x1` FLOAT, `x2` FLOAT, `y0` FLOAT, `y1` FLOAT, `y2` FLOAT);",
-	"CREATE TABLE IF NOT EXISTS `records` (`id` INT AUTO_INCREMENT, `mapname` VARCHAR(64), `playerid` INT, `time` FLOAT, `type` INT, `group` INT);",
-	"CREATE TABLE IF NOT EXISTS `checkpoints` (`id` INT AUTO_INCREMENT, `playerid` INT, `recordid` INT, `zoneid` INT, `time` FLOAT);"
+	"CREATE TABLE IF NOT EXISTS `zones` (`id` INT AUTO_INCREMENT PRIMARY KEY, `mapname` VARCHAR(64)`, `type` INT, `group` INT, `x0` FLOAT, `x1` FLOAT, `x2` FLOAT, `y0` FLOAT, `y1` FLOAT, `y2` FLOAT);",
+	"CREATE TABLE IF NOT EXISTS `records` (`id` INT AUTO_INCREMENT PRIMARY KEY, `mapname` VARCHAR(64), `playerid` INT, `time` FLOAT, `type` INT, `group` INT);",
+	"CREATE TABLE IF NOT EXISTS `checkpoints` (`id` INT AUTO_INCREMENT PRIMARY KEY, `playerid` INT, `recordid` INT, `zoneid` INT, `time` FLOAT);"
 };
 
 char g_SqlLiteTables[][] = {
@@ -176,82 +176,106 @@ void Sql_Timer() {
 	SQL_ExecuteTransaction(g_Global.Storage, tQueries, T_Success, T_Error);
 }
 
+void Query_InsertZone(DBResultSet rResults, Query qQuery) {
+	Zone zZone; g_Global.Zones.GetArray(qQuery.Index, zZone);
+	zZone.Id = rResults.InsertId;
+	g_Global.Zones.SetArray(qQuery.Index, zZone);
+}
+
+void Query_SelectZone(DBResultSet rResults) {
+	float xPos[3], yPos[3];
+
+	for (int i = 0; i < rResults.RowCount; i++) {
+		rResults.FetchRow();
+
+		for (int k = 0; k < 3; k++) {
+			xPos[k] = rResults.FetchFloat(3 + k);
+			yPos[k] = rResults.FetchFloat(6 + k);
+		}
+
+		Zone_AddZone(xPos, yPos, rResults.FetchInt(1), rResults.FetchInt(2), rResults.FetchInt(0));
+
+		for (int k = 0; k <= MaxClients; k++) {
+			if (!Misc_CheckPlayer(k, PLAYER_INGAME) && k != 0) continue;
+			switch (rResults.FetchInt(1)) {
+				case ZONE_END: Sql_SelectRecord(k, g_Global.Zones.Length - 1, rResults.FetchInt(2));
+				case ZONE_CHECKPOINT: Sql_SelectCheckpoint(k, g_Global.Zones.Length - 1, rResults.FetchInt(0));
+			}
+		}
+	}
+
+	Zone_Reload();
+}
+
+void Query_InsertRecord(DBResultSet rResults, Query qQuery) {
+	for (int i = 0; i < qQuery.Checkpoints.Length; i++) {
+		Checkpoint cCheckpoint; qQuery.Checkpoints.GetArray(i, cCheckpoint);
+		Sql_AddCheckpoint(qQuery.Client, rResults.InsertId, cCheckpoint.ZoneId, cCheckpoint.Time);
+	}
+	delete qQuery.Checkpoints;
+}
+
+void Query_SelectRecord(DBResultSet rResults, Query qQuery) {
+	int iClient = GetClientOfUserId(qQuery.Client);
+	if (iClient == 0 && qQuery.Client != 0) return;
+
+	Zone zZone; g_Global.Zones.GetArray(qQuery.Index, zZone);
+
+	for (int i = 0; i < rResults.RowCount; i++) {
+		rResults.FetchRow();
+		Record rRecord;
+
+		rRecord.Id = rResults.FetchInt(0);
+		rRecord.EndTime = rResults.FetchFloat(1);
+		rRecord.Group = rResults.FetchInt(2);
+		rRecord.Style = rResults.FetchInt(3);
+
+		if (iClient == 0) {
+			if (i == 0) zZone.RecordIndex[0] = g_Global.Records.Length;
+			g_Global.Records.PushArray(rRecord);
+		} else {
+			if (i == 0) zZone.RecordIndex[iClient] = gP_Player[iClient].Records.Length;
+			gP_Player[iClient].Records.PushArray(rRecord);
+		}
+
+		g_Global.Zones.SetArray(qQuery.Index, zZone);
+	}
+}
+
+void Query_SelectCheckpoint(DBResultSet rResults, Query qQuery) {
+	int iClient = GetClientOfUserId(qQuery.Client);
+	if (iClient == 0 && qQuery.Client != 0) return;
+
+	Zone zZone; g_Global.Zones.GetArray(qQuery.Index, zZone);
+
+	for (int i = 0; i < rResults.RowCount; i++) {
+		rResults.FetchRow();
+		Checkpoint cCheckpoint;
+
+		cCheckpoint.RecordId  = rResults.FetchInt(1);
+		cCheckpoint.ZoneId = rResults.FetchInt(2);
+		cCheckpoint.Time = rResults.FetchFloat(3);
+
+		if (iClient == 0) {
+			if (i == 0) zZone.RecordIndex[0] = g_Global.Checkpoints.Length;
+			g_Global.Checkpoints.PushArray(cCheckpoint);
+		} else {
+			if (i == 0) zZone.RecordIndex[iClient] = gP_Player[iClient].RecordCheckpoints.Length;
+			gP_Player[iClient].RecordCheckpoints.PushArray(cCheckpoint);
+		}
+	}
+
+	g_Global.Zones.SetArray(qQuery.Index, zZone);
+}
+
 void T_Success(Database dStorage, any aData, int iQueries, DBResultSet[] rResults, Query[] qQuery) {
 	for (int i = 0; i < iQueries; i++) {
 		switch (qQuery[i].Type) {
-			case QUERY_INSERTZONE: {
-				Zone zZone; g_Global.Zones.GetArray(qQuery[i].Index, zZone);
-				zZone.Id = rResults[i].InsertId;
-				g_Global.Zones.SetArray(qQuery[i].Index, zZone);
-			} case QUERY_SELECTZONE: {
-				float xPos[3], yPos[3];
-				for (int k = 0; k < rResults[i].RowCount; k++) {
-					rResults[i].FetchRow();
-					for (int l = 0; l < 3; l++) {
-						xPos[l] = rResults[i].FetchFloat(3 + l);
-						yPos[l] = rResults[i].FetchFloat(6 + l);
-					}
-					Zone_AddZone(xPos, yPos, rResults[i].FetchInt(1), rResults[i].FetchInt(2), rResults[i].FetchInt(0));
-					
-					for (int l = 0; l <= MaxClients; l++) {
-						if (!Misc_CheckPlayer(l, PLAYER_INGAME) && l != 0) continue;
-						switch (rResults[i].FetchInt(1)) {
-							case ZONE_END: Sql_SelectRecord(l, g_Global.Zones.Length - 1, rResults[i].FetchInt(2));
-							case ZONE_CHECKPOINT: Sql_SelectCheckpoint(l, g_Global.Zones.Length - 1, rResults[i].FetchInt(0));
-						}
-					}
-				}
-				Zone_Reload();
-			} case QUERY_INSERTRECORD: {
-				for (int k = 0; k < qQuery[i].Checkpoints.Length; k++) {
-					Checkpoint cCheckpoint; qQuery[i].Checkpoints.GetArray(k, cCheckpoint);
-					Sql_AddCheckpoint(qQuery[i].Client, rResults[i].InsertId, cCheckpoint.ZoneId, cCheckpoint.Time);
-				}
-				delete qQuery[i].Checkpoints;
-			} case QUERY_SELECTRECORD: {
-				Zone zZone; g_Global.Zones.GetArray(qQuery[i].Index, zZone);
-				int iClient = GetClientOfUserId(qQuery[i].Client);
-
-				for (int k = 0; k < rResults[i].RowCount; k++) {
-					Record rRecord;
-					rResults[i].FetchRow();
-
-					rRecord.Id = rResults[i].FetchInt(0);
-					rRecord.EndTime = rResults[i].FetchFloat(1);
-					rRecord.Group = rResults[i].FetchInt(2);
-					rRecord.Style = rResults[i].FetchInt(3);
-
-					if (iClient == 0) {
-						if (k == 0) zZone.RecordIndex[0] = g_Global.Records.Length;
-						g_Global.Records.PushArray(rRecord);
-					} else {
-						if (k == 0) zZone.RecordIndex[iClient] = gP_Player[iClient].Records.Length;
-						gP_Player[iClient].Records.PushArray(rRecord);
-					}
-				}
-				g_Global.Zones.SetArray(qQuery[i].Index, zZone);
-			} case QUERY_SELECTCHECKPOINT: {
-				Zone zZone; g_Global.Zones.GetArray(qQuery[i].Index, zZone);
-				int iClient = GetClientOfUserId(qQuery[i].Client);
-
-				for (int k = 0; k < rResults[i].RowCount; k++) {
-					Checkpoint cCheckpoint;
-					rResults[i].FetchRow();
-
-					cCheckpoint.RecordId  = rResults[i].FetchInt(1);
-					cCheckpoint.ZoneId = rResults[i].FetchInt(2);
-					cCheckpoint.Time = rResults[i].FetchFloat(3);
-
-					if (iClient == 0) {
-						if (k == 0) zZone.RecordIndex[0] = g_Global.Checkpoints.Length;
-						g_Global.Checkpoints.PushArray(cCheckpoint);
-					} else {
-						if (k == 0) zZone.RecordIndex[iClient] = gP_Player[iClient].RecordCheckpoints.Length;
-						gP_Player[iClient].RecordCheckpoints.PushArray(cCheckpoint);
-					}
-				}
-				g_Global.Zones.SetArray(qQuery[i].Index, zZone);
-			}
+			case QUERY_INSERTZONE: Query_InsertZone(rResults[i], qQuery[i]);
+			case QUERY_SELECTZONE: Query_SelectZone(rResults[i]);
+			case QUERY_INSERTRECORD: Query_InsertRecord(rResults[i], qQuery[i]);
+			case QUERY_SELECTRECORD: Query_SelectRecord(rResults[i], qQuery[i]);
+			case QUERY_SELECTCHECKPOINT: Query_SelectCheckpoint(rResults[i], qQuery[i]);
 		}
 		delete qQuery[i];
 	}
