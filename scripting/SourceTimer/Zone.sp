@@ -19,6 +19,7 @@ public Action Command_Restart(int iClient, int iArgs) {
 	zZone.GetY(yPos);
 	Misc_CalculateCentre(xPos, yPos, fCentre);
 	gP_Player[iClient].RecentlyAbused = true;
+	gP_Player[iClient].Record.StartTime = -1.0;
 	TeleportEntity(iClient, fCentre, NULL_VECTOR, NULL_VECTOR);
 	return Plugin_Handled;
 }

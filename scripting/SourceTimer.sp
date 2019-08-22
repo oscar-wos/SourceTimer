@@ -32,7 +32,7 @@
 #define BOTS_MAX 2
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.19"
+#define PLUGIN_VERSION "0.20"
 
 #include <sourcemod>
 #include <sdktools>
@@ -86,7 +86,7 @@ public void OnPluginStart() {
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-	PrintToChatAll("%i", gP_Player[iClient].Replay.Frames.Length);
+	SetEntityMoveType(iClient, GetEntityMoveType(iClient) == MOVETYPE_NOCLIP ? MOVETYPE_WALK : MOVETYPE_NOCLIP);
 }
 
 public void OnMapStart() {
@@ -128,6 +128,8 @@ public void OnClientPostAdminCheck(int iClient) {
 }
 
 public void OnClientDisconnect_Post(int iClient) {
+	if (!Misc_CheckPlayer(iClient, PLAYER_VALID)) return;
+
 	delete gP_Player[iClient].Checkpoints;
 	delete gP_Player[iClient].RecordCheckpoints;
 	delete gP_Player[iClient].Records;

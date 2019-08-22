@@ -45,6 +45,7 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 
 			Zone_Message(iActivator, gP_Player[iActivator].Record.EndTime, fServerTime, fPersonalTime, ZONE_END);
 			Sql_AddRecord(iActivator, gP_Player[iActivator].Record.Style, gP_Player[iActivator].Record.Group, gP_Player[iActivator].Record.EndTime, view_as<Checkpoints>(gP_Player[iActivator].Checkpoints.Clone()));
+			Replay_Save(iActivator, gP_Player[iActivator].Record.Style, gP_Player[iActivator].Record.Group, gP_Player[iActivator].Record.EndTime, gP_Player[iActivator].Replay.Frames.Clone());
 
 			for (int i = 0; i < gP_Player[iActivator].Checkpoints.Length; i++) {
 				Checkpoint cCheckpoint;
