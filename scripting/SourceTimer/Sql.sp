@@ -1,5 +1,5 @@
 char g_SqlTables[][] = {
-	"CREATE TABLE IF NOT EXISTS `zones` (`id` INT AUTO_INCREMENT PRIMARY KEY, `mapname` VARCHAR(64)`, `type` INT, `group` INT, `x0` FLOAT, `x1` FLOAT, `x2` FLOAT, `y0` FLOAT, `y1` FLOAT, `y2` FLOAT);",
+	"CREATE TABLE IF NOT EXISTS `zones` (`id` INT AUTO_INCREMENT PRIMARY KEY, `mapname` VARCHAR(64), `type` INT, `group` INT, `x0` FLOAT, `x1` FLOAT, `x2` FLOAT, `y0` FLOAT, `y1` FLOAT, `y2` FLOAT);",
 	"CREATE TABLE IF NOT EXISTS `records` (`id` INT AUTO_INCREMENT PRIMARY KEY, `mapname` VARCHAR(64), `playerid` INT, `time` FLOAT, `type` INT, `group` INT);",
 	"CREATE TABLE IF NOT EXISTS `checkpoints` (`id` INT AUTO_INCREMENT PRIMARY KEY, `playerid` INT, `recordid` INT, `zoneid` INT, `time` FLOAT);"
 };

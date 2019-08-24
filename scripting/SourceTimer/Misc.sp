@@ -154,7 +154,7 @@ void Misc_EndMessage(int iClient, int iStyle, int iGroup, float fTime) {
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!Misc_CheckPlayer(i, PLAYER_VALID)) continue;
-		if (i != iClient) Format(cBuffer, 512, "%s %s", cClientName, cBuffer);
+		if (i != iClient) Timer_Message(i, "%s%s %s %s", TEXT_PREFIX, TEXT_DEFAULT, cClientName, cBuffer); 
 		Timer_Message(i, "%s%s%s", TEXT_PREFIX, TEXT_DEFAULT, cBuffer); 
 	}
 }
