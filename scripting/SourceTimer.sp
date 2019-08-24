@@ -30,9 +30,10 @@
 #define BOX_BOUNDRY 120.0
 #define HUD_SHOWPREVIOUS 5.0
 #define BOTS_MAX 2
+#define REPLAY_BUFFER_SIZE 128
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.21"
+#define PLUGIN_VERSION "0.22"
 
 #include <sourcemod>
 #include <sdktools>
@@ -81,6 +82,8 @@ public void OnPluginStart() {
 
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
+	HookUserMessage(GetUserMessageId("TextMsg"), Hook_TextMsg, true);
+	// HookUserMessage(GetUserMessageId("SayText2"), Hook_SayText2, true);
 	AddCommandListener(Hook_JoinTeam, "jointeam");
 
 	Admin_Start();

@@ -56,6 +56,35 @@ char C_TagCodes[][] = {
 	"\x0F"
 };
 
+char C_BlockMessages[][] = {
+	"#Player_Cash_Award_ExplainSuicide_YouGotCash",
+	"#Player_Cash_Award_ExplainSuicide_Spectators",
+	"#Player_Cash_Award_ExplainSuicide_EnemyGotCash",
+	"#Player_Cash_Award_ExplainSuicide_TeammateGotCash",
+	"#game_respawn_as",
+	"#game_spawn_as",
+	"#Player_Cash_Award_Killed_Enemy",
+	"#Team_Cash_Award_Win_Time",
+	"#Player_Point_Award_Assist_Enemy_Plural",
+	"#Player_Point_Award_Assist_Enemy",
+	"#Player_Point_Award_Killed_Enemy_Plural",
+	"#Player_Point_Award_Killed_Enemy",
+	"#Player_Cash_Award_Respawn",
+	"#Player_Cash_Award_Get_Killed",
+	"#Player_Cash_Award_Killed_Enemy",
+	"#Player_Cash_Award_Killed_Enemy_Generic",
+	"#Player_Cash_Award_Kill_Teammate",
+	"#Team_Cash_Award_Loser_Bonus",
+	"#Team_Cash_Award_Loser_Zero",
+	"#Team_Cash_Award_no_income",
+	"#Team_Cash_Award_Generic",
+	"#Team_Cash_Award_Custom",
+	"#Player_Cash_Award_ExplainSuicide_YouGotCash",
+	"#Player_Cash_Award_ExplainSuicide_TeammateGotCash",
+	"#Player_Cash_Award_ExplainSuicide_EnemyGotCash",
+	"#Player_Cash_Award_ExplainSuicide_Spectators"
+};
+
 int C_Colors[][] = {
 	{ 255, 0, 0, 255 }, // Red
 	{ 0, 255, 0, 255 }, // Green
@@ -250,6 +279,8 @@ enum struct Player {
 	Record Record;
 	Replay Replay;
 	int CurrentZone;
+	int PreviousZone;
+	float PreviousTime;
 	int Style;
 	bool RecentlyAbused;
 }
@@ -415,6 +446,20 @@ stock void Timer_CommandReply(int iClient, const char[] cMessage, any ...) {
 	if (iClient == 0) PrintToServer(cCMessage);
 	else if (GetCmdReplySource() == SM_REPLY_TO_CONSOLE) PrintToConsole(iClient, cCMessage);
 	else PrintToChat(iClient, cCMessage);
+}
+
+stock void Timer_Message(int iClient, const char[] cMessage, any ...) {
+	char[] cCMessage = new char[MAX_MESSAGE_LENGTH];
+
+	SetGlobalTransTarget(iClient);
+	VFormat(cCMessage, MAX_MESSAGE_LENGTH, cMessage, 3);
+	ChangeTags(cCMessage, MAX_MESSAGE_LENGTH);
+
+	if (iClient != 0) PrintToChat(iClient, cCMessage);
+	else {
+		RemoveTags(cCMessage, MAX_MESSAGE_LENGTH);
+		PrintToServer(cCMessage);
+	}
 }
 
 void ChangeTags(char[] cMessage, int iLength) {

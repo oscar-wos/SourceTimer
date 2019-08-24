@@ -43,7 +43,8 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 				fPersonalTime = rPersonalBest.EndTime;
 			}
 
-			Zone_Message(iActivator, gP_Player[iActivator].Record.EndTime, fServerTime, fPersonalTime, ZONE_END);
+			Misc_EndMessage(iActivator, gP_Player[iActivator].Record.Style, gP_Player[iActivator].Record.Group, gP_Player[iActivator].Record.EndTime);
+			Zone_Message(iActivator, gP_Player[iActivator].Record.EndTime, fServerTime, fPersonalTime);
 			Sql_AddRecord(iActivator, gP_Player[iActivator].Record.Style, gP_Player[iActivator].Record.Group, gP_Player[iActivator].Record.EndTime, view_as<Checkpoints>(gP_Player[iActivator].Checkpoints.Clone()));
 			Replay_Save(iActivator, gP_Player[iActivator].Record.Style, gP_Player[iActivator].Record.Group, gP_Player[iActivator].Record.EndTime, gP_Player[iActivator].Replay.Frames.Clone());
 
@@ -116,12 +117,13 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 				fPersonalTime = cPersonalBest.Time;
 			}
 
-			Zone_Message(iActivator, cCheckpoint.Time, fServerTime, fPersonalTime, ZONE_CHECKPOINT);
+			Zone_Message(iActivator, cCheckpoint.Time, fServerTime, fPersonalTime);
 			gP_Player[iActivator].Checkpoints.PushArray(cCheckpoint);
+			gP_Player[iActivator].PreviousTime = GetGameTime();
 		}
 	}
 
-	gP_Player[iActivator].CurrentZone = zZone.Type;
+	gP_Player[iActivator].CurrentZone = iIndex;
 }
 
 Action Hook_EndTouch(int iCaller, int iActivator) {
@@ -157,7 +159,8 @@ Action Hook_EndTouch(int iCaller, int iActivator) {
 	}
 
 	if (gP_Player[iActivator].RecentlyAbused) return;
-	gP_Player[iActivator].CurrentZone = ZONE_UNDEFINED;
+	gP_Player[iActivator].CurrentZone = -1;
+	gP_Player[iActivator].PreviousZone = iIndex;
 }
 
 void Hook_ConVarChange(ConVar cvConVar, const char[] cOldValue, const char[] cNewValue) {
@@ -178,4 +181,14 @@ Action Hook_JoinTeam(int iClient, char[] cCommand, int iArgc) {
 	int iArg1 = StringToInt(cArg1);
 	ChangeClientTeam(iClient, iArg1);
 	if (iArg1 != 1) CS_RespawnPlayer(iClient);
+}
+
+Action Hook_TextMsg(UserMsg msg_id, Protobuf msg, const int[] players, int playersNum, bool reliable, bool init) {
+	char[] cBuffer = new char[512];
+	msg.ReadString("params", cBuffer, 512, 0);
+	for (int i = 0; i < sizeof(C_BlockMessages); i++) {
+		if (StrEqual(cBuffer, C_BlockMessages[i], false)) return Plugin_Handled;
+	}
+
+	return Plugin_Continue;
 }

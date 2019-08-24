@@ -32,13 +32,13 @@ ArrayList Replay_Load(int iClient, int iStyle, int iGroup) {
 	iSize = StringToInt(cHeaderExplode[0]);
 
 	ArrayList alFrames = new ArrayList(sizeof(ReplayFrame));
-	any[] aFrameData = new any[128 * 10];
+	any[] aFrameData = new any[REPLAY_BUFFER_SIZE * sizeof(ReplayFrame)];
 
 	for (int i = 0; i < iSize; i++) {
 		float fPos[3], fAngle[3], fVel[3];
 		ReplayFrame rFrame;
 
-		if (fReplay.Read(aFrameData, 10, 4) >= 0) {
+		if (fReplay.Read(aFrameData, sizeof(ReplayFrame), 4) >= 0) {
 			for (int k = 0; k < 3; k++) {
 				fPos[k] = view_as<float>(aFrameData[k]);
 				fAngle[k] = view_as<float>(aFrameData[k + 3]);
@@ -94,7 +94,7 @@ void Replay_Save(int iClient, int iStyle, int iGroup, float fTime, ArrayList alF
 	fReplay = OpenFile(cBuffer, "wb");
 	fReplay.WriteLine("%i|%f", alFrames.Length, fTime);
 
-	any[] aFrameData = new any[128 * 10];
+	any[] aFrameData = new any[REPLAY_BUFFER_SIZE * sizeof(ReplayFrame)];
 	int iFrameQueued;
 
 	for (int i = 0; i < alFrames.Length; i++) {
@@ -106,17 +106,17 @@ void Replay_Save(int iClient, int iStyle, int iGroup, float fTime, ArrayList alF
 		rFrame.GetVel(fVel);
 
 		for (int k = 0; k < 3; k++) {
-			aFrameData[((iFrameQueued * 10) + k)] = fPos[k];
-			aFrameData[((iFrameQueued * 10) + (k + 3))] = fAngle[k];
-			aFrameData[((iFrameQueued * 10) + (k + 6))] = fVel[k];
+			aFrameData[((iFrameQueued * sizeof(ReplayFrame)) + k)] = fPos[k];
+			aFrameData[((iFrameQueued * sizeof(ReplayFrame)) + (k + 3))] = fAngle[k];
+			aFrameData[((iFrameQueued * sizeof(ReplayFrame)) + (k + 6))] = fVel[k];
 
-			if (k == 0) aFrameData[((iFrameQueued * 10) + 9)] = rFrame.Buttons;
+			if (k == 0) aFrameData[((iFrameQueued * sizeof(ReplayFrame)) + 9)] = rFrame.Buttons;
 		}
 
 		iFrameQueued++;
 
-		if (i == (alFrames.Length - 1) || iFrameQueued == 128) {
-			fReplay.Write(aFrameData, iFrameQueued * 10, 4);
+		if (i == (alFrames.Length - 1) || iFrameQueued == REPLAY_BUFFER_SIZE) {
+			fReplay.Write(aFrameData, iFrameQueued * sizeof(ReplayFrame), 4);
 			iFrameQueued = 0;
 		}
 	}

@@ -59,12 +59,8 @@ void Misc_FormatTimePrefix(float fTime, float fDiff, char[] cBuffer, int iMaxLen
 
 Action Misc_Run(int iClient) {
 	if (IsClientObserver(iClient)) {
-		int iClientSpecMode = GetEntProp(iClient, Prop_Send, "m_iObserverMode");
-
-		if (iClientSpecMode == 4 || iClientSpecMode == 5) {
-			int iTarget = GetEntPropEnt(iClient, Prop_Send, "m_hObserverTarget");
-			if (iTarget != -1) Misc_ShowHud(iClient, iTarget);
-		}
+		int iTarget = GetEntPropEnt(iClient, Prop_Send, "m_hObserverTarget");
+		if (iTarget != -1) Misc_ShowHud(iClient, iTarget);
 	} else {
 		Misc_ShowHud(iClient, iClient);
 	}
@@ -73,10 +69,34 @@ Action Misc_Run(int iClient) {
 void Misc_ShowHud(int iClient, int iTarget) {
 	if (gP_Player[iTarget].Record.StartTime > 0.0) {
 		char[] cBuffer = new char[4096];
-		char cTime[32];
+		char[] cTime = new char[32];
+		float fTime = GetGameTime();
 
-		Misc_FormatTime(gP_Player[iTarget].Record.StartTime - GetGameTime(), cTime, sizeof(cTime));
-		FormatEx(cBuffer, 4096, "Time: %s", cTime);
+		if (gP_Player[iTarget].PreviousTime != 0.0 && (fTime - gP_Player[iTarget].PreviousTime) < 5) {
+			if (gP_Player[iTarget].Checkpoints.Length > 0) {
+				Checkpoint cCheckpoint; gP_Player[iTarget].Checkpoints.GetArray(gP_Player[iTarget].Checkpoints.Length - 1, cCheckpoint);
+				char[] cOldTime = new char[32];
+
+				Misc_FormatTime(cCheckpoint.Time, cOldTime, 32);
+				FormatEx(cBuffer, 4096, "%s", cOldTime);
+			}
+			/*
+			Zone zZone; g_Global.Zones.GetArray(gP_Player[iTarget].PreviousZone, zZone);
+
+			if (zZone.RecordIndex[iTarget] != -1) {
+				
+				Checkpoint cCheckpoint, c
+				Checkpoint cCheckpoint; gP_Player[iTarget].RecordCheckpoints.GetArray(zZone.RecordIndex[iTarget], cCheckpoint);
+				Misc_FormatTime(cCheckpoint.Time, cOldTime, 32);
+
+				FormatEx(cBuffer, 4096, "%s", cOldTime);
+			}
+			*/
+		}
+
+		Misc_FormatTime(gP_Player[iTarget].Record.StartTime - fTime, cTime, 32);
+		FormatEx(cBuffer, 4096, "%s Time: %s", cBuffer, cTime);
+
 		PrintHintText(iClient, cBuffer);
 	}
 }
@@ -86,6 +106,9 @@ void Misc_StartTimer(int iClient) {
 	gP_Player[iClient].Record.StartTime = GetGameTime();
 	gP_Player[iClient].RecentlyAbused = false;
 	gP_Player[iClient].Replay.Frame = 0;
+	gP_Player[iClient].PreviousTime = 0.0;
+	gP_Player[iClient].PreviousZone = 0;
+	gP_Player[iClient].CurrentZone = 0;
 }
 
 void Misc_ConVars() {
@@ -105,5 +128,33 @@ void Misc_ConVars() {
 			cConVar.SetString(cTemp[1]);
 			cConVar.AddChangeHook(Hook_ConVarChange);
 		}
+	}
+}
+
+void Misc_SegmentMessage(int iClient, char[] cMessage) {
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!Misc_CheckPlayer(i, PLAYER_VALID)) continue;
+		if (i == iClient) PrintToChat(iClient, "%s", cMessage);
+		else {
+			if (!IsClientObserver(i)) return;
+			int iTarget = GetEntPropEnt(iClient, Prop_Send, "m_hObserverTarget");
+			if (i == iTarget) PrintToChat(iClient, "%s", cMessage);
+		}
+	}
+}
+
+void Misc_EndMessage(int iClient, int iStyle, int iGroup, float fTime) {
+	char[] cBuffer = new char[512];
+	char[] cClientName = new char[64];
+	char[] cTime = new char[64];
+
+	GetClientName(iClient, cClientName, 64);
+	Misc_FormatTime(fTime, cTime, 64);
+	Format(cBuffer, 512, "Finished %i on %i - %s", iGroup, iStyle, cTime);
+
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!Misc_CheckPlayer(i, PLAYER_VALID)) continue;
+		if (i != iClient) Format(cBuffer, 512, "%s %s", cClientName, cBuffer);
+		Timer_Message(i, "%s%s%s", TEXT_PREFIX, TEXT_DEFAULT, cBuffer); 
 	}
 }

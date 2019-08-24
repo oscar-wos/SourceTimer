@@ -188,11 +188,8 @@ void Zone_Reload() {
 	}
 }
 
-void Zone_Message(int iClient, float fTime, float fServerTime, float fPersonalTime, int iZoneType) {
+void Zone_Message(int iClient, float fTime, float fServerTime, float fPersonalTime) {
 	char cBuffer[512], cTime[32], cServerTime[32], cPersonalTime[32], cServerDiff[32], cPersonalDiff[32];
-
-	if (iZoneType == ZONE_END) Format(cBuffer, sizeof(cBuffer), "END:");
-	else if (iZoneType == ZONE_CHECKPOINT) Format(cBuffer, sizeof(cBuffer), "CP:");
 
 	Misc_FormatTime(fTime, cTime, sizeof(cTime));
 	Misc_FormatTime(fServerTime, cServerTime, sizeof(cServerTime));
@@ -202,8 +199,8 @@ void Zone_Message(int iClient, float fTime, float fServerTime, float fPersonalTi
 
 	Misc_FormatTimePrefix(fServerTime, fServerTime - fTime, cServerDiff, sizeof(cServerDiff));
 	Misc_FormatTimePrefix(fPersonalTime, fPersonalTime - fTime, cPersonalDiff, sizeof(cPersonalDiff));
-	// PrintToChatAll("%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
-	PrintToChat(iClient, "%s %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cBuffer, cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
+	Format(cBuffer, 512, " %s (PB: \x0B%s\x01) | %s (WB: \x0B%s\x01)", cPersonalDiff, cPersonalTime, cServerDiff, cServerTime);
+	Misc_SegmentMessage(iClient, cBuffer);
 }
 
 void Zone_Timer() {
@@ -240,17 +237,24 @@ void Zone_TeleportToStart(int iClient) {
 }
 
 Action Zone_Run(int iClient, int& iButtons) {
-	if (gP_Player[iClient].CurrentZone == ZONE_START) {
-		if (gP_Player[iClient].Record.StartTime == -1.0) if (GetEntityFlags(iClient) & FL_ONGROUND) gP_Player[iClient].Record.StartTime = 0.0;
-		if (gP_Player[iClient].Record.StartTime == 0.0) if (!(GetEntityFlags(iClient) & FL_ONGROUND) && (iButtons & IN_JUMP)) Misc_StartTimer(iClient);
-		if (GetEntityFlags(iClient) & FL_ONGROUND) gP_Player[iClient].Record.StartTime = 0.0;
-	}
+	Zone zZone;
+	bool bDenyBhop;
 
-	if (gP_Player[iClient].CurrentZone != ZONE_START) {
-		if (!(GetEntityMoveType(iClient) & MOVETYPE_LADDER) && !(GetEntityFlags(iClient) & FL_ONGROUND) && (GetEntProp(iClient, Prop_Data, "m_nWaterLevel") < 2)) {
-			iButtons &= ~IN_JUMP;
+	if (gP_Player[iClient].CurrentZone != -1) {
+		if (gP_Player[iClient].CurrentZone < g_Global.Zones.Length) {
+			g_Global.Zones.GetArray(gP_Player[iClient].CurrentZone, zZone);
+
+			if (zZone.Type == ZONE_START) {
+				if (gP_Player[iClient].Record.StartTime == -1.0) if (GetEntityFlags(iClient) & FL_ONGROUND) gP_Player[iClient].Record.StartTime = 0.0;
+				if (gP_Player[iClient].Record.StartTime == 0.0) if (!(GetEntityFlags(iClient) & FL_ONGROUND) && (iButtons & IN_JUMP)) Misc_StartTimer(iClient);
+				if (GetEntityFlags(iClient) & FL_ONGROUND) gP_Player[iClient].Record.StartTime = 0.0;
+				bDenyBhop = true;
+			}
 		}
 	}
+
+	if (bDenyBhop) return;
+	if (!(GetEntityMoveType(iClient) & MOVETYPE_LADDER) && !(GetEntityFlags(iClient) & FL_ONGROUND) && (GetEntProp(iClient, Prop_Data, "m_nWaterLevel") < 2)) iButtons &= ~IN_JUMP;
 }
 
 bool Filter_HitSelf(int iEntity, int iMask, any aData) {
