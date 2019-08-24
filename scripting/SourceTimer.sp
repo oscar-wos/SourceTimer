@@ -33,7 +33,7 @@
 #define REPLAY_BUFFER_SIZE 128
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.22"
+#define PLUGIN_VERSION "0.23"
 
 #include <sourcemod>
 #include <sdktools>
