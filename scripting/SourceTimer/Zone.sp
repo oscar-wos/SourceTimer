@@ -1,29 +1,3 @@
-void Zone_Start() {
-	RegConsoleCmd("sm_r", Command_Restart);
-}
-
-public Action Command_Restart(int iClient, int iArgs) {
-	if (!Misc_CheckPlayer(iClient, PLAYER_INGAME)) return Plugin_Handled;
-
-	int iIndex = g_Global.Zones.FindSingleZone(1, 0);
-	if (iIndex == -1) {
-		char[] cBuffer = new char[512];
-		Format(cBuffer, 512, "%s%s%t", TEXT_PREFIX, TEXT_DEFAULT, "check_zonenotfound");
-		Timer_CommandReply(iClient, cBuffer);
-		return Plugin_Handled;
-	}
-
-	float xPos[3], yPos[3], fCentre[3];
-	Zone zZone; g_Global.Zones.GetArray(iIndex, zZone);
-	zZone.GetX(xPos);
-	zZone.GetY(yPos);
-	Misc_CalculateCentre(xPos, yPos, fCentre);
-	gP_Player[iClient].RecentlyAbused = true;
-	gP_Player[iClient].Record.StartTime = -1.0;
-	TeleportEntity(iClient, fCentre, NULL_VECTOR, NULL_VECTOR);
-	return Plugin_Handled;
-}
-
 void Zone_Draw(float xPos[3], float yPos[3], int iColor, float fDisplay, bool bAll, int iClient = 0) {
 	float fPoints[8][3];
 
@@ -249,6 +223,20 @@ void Zone_Timer() {
 	}
 
 	if (g_Global.Render == g_Global.Zones.Length) g_Global.Render = 0;
+}
+
+void Zone_TeleportToStart(int iClient) {
+	int iIndex = g_Global.Zones.FindSingleZone(1, 0);
+	if (iIndex == -1) return;
+
+	float xPos[3], yPos[3], fSpawn[3];
+	Zone zZone; g_Global.Zones.GetArray(iIndex, zZone);
+	zZone.GetX(xPos);
+	zZone.GetY(yPos);
+	Misc_CalculateSpawn(xPos, yPos, fSpawn);
+	gP_Player[iClient].RecentlyAbused = true;
+	gP_Player[iClient].Record.StartTime = -1.0;
+	TeleportEntity(iClient, fSpawn, NULL_VECTOR, NULL_VECTOR);
 }
 
 Action Zone_Run(int iClient, int& iButtons) {

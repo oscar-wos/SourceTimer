@@ -1,6 +1,11 @@
-#define PLAYER_VALID 0
-#define PLAYER_INGAME 1
-#define PLAYER_ALIVE 2
+enum {
+	PLAYER_ENTITY,
+	PLAYER_CONNECTED,
+	PLAYER_INGAME,
+	PLAYER_VALID,
+	PLAYER_ALIVE,
+}
+
 #define ZONES_TOTAL 3
 
 // csgocolors.inc - Author: exvel, Editor: Popoklopsi, Powerlord, Zipcore, Bara
@@ -232,6 +237,11 @@ methodmap Replay < StringMap {
 	}
 }
 
+enum struct Bot {
+	Replay Replay;
+	int Client;
+}
+
 enum struct Player {
 	Checkpoints RecordCheckpoints;
 	Records Records;
@@ -337,6 +347,7 @@ methodmap Global < StringMap {
 		smMap.SetValue("records", new Records());
 		smMap.SetValue("zones", new Zones());
 		smMap.SetValue("models", new Models());
+		smMap.SetValue("convars", new StringMap());
 		smMap.SetValue("render", 0);
 		return view_as<Global>(smMap);
 	}
@@ -379,6 +390,11 @@ methodmap Global < StringMap {
 	property Models Models {
 		public get() { Models mModels; this.GetValue("models", mModels); return mModels; }
 		public set(Models mModels) { this.SetValue("models", mModels); }
+	}
+
+	property StringMap Convars {
+		public get() { StringMap smConvars; this.GetValue("convars", smConvars); return smConvars; }
+		public set(StringMap smConvars) { this.SetValue("convars", smConvars); }
 	}
 
 	property int Render {

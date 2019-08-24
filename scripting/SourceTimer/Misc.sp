@@ -1,20 +1,16 @@
-bool Misc_CheckPlayer(int iClient, int iType, bool bMessage = false) {
-	char[] cBuffer = new char[512];
+void Misc_Start() {
+	Misc_PrecacheModels();
+	Misc_ConVars();
+}
 
-	if (iClient >= MaxClients || iClient < 0) return false;
+bool Misc_CheckPlayer(int iClient, int iType) {
+	if (iClient < 1 || iClient >= MaxClients) return false;
 
-	if (iType >= PLAYER_ALIVE) if (!IsPlayerAlive(iClient)) {
-		if (bMessage) { Format(cBuffer, 512, "%s%s%t", TEXT_PREFIX, TEXT_DEFAULT, "check_alive", TEXT_HIGHLIGHT, TEXT_DEFAULT); Timer_CommandReply(iClient, cBuffer); }
-		return false;
-	}
-
-	if (iType >= PLAYER_INGAME) if (iClient == 0 || !IsValidEntity(iClient) || !IsClientInGame(iClient)) {
-		if (bMessage) { Format(cBuffer, 512, "%s%s%t", TEXT_PREFIX, TEXT_DEFAULT, "check_ingame", TEXT_HIGHLIGHT, TEXT_DEFAULT); Timer_CommandReply(iClient, cBuffer); }
-		return false;
-	}
-
+	if (iType >= PLAYER_ENTITY) if (!IsValidEntity(iClient)) return false;
+	if (iType >= PLAYER_CONNECTED) if (!IsClientConnected(iClient)) return false;
+	if (iType >= PLAYER_INGAME) if (!IsClientInGame(iClient)) return false;
 	if (iType >= PLAYER_VALID) if (IsFakeClient(iClient)) return false;
-
+	if (iType >= PLAYER_ALIVE) if (!IsPlayerAlive(iClient)) return false;
 	return true;
 }
 
@@ -36,6 +32,12 @@ int Misc_CalculateZoneGroup(int iGroup) {
 
 void Misc_CalculateCentre(float xPos[3], float yPos[3], float fCentre[3]) {
 	for (int i = 0; i < 3; i++) fCentre[i] = (xPos[i] + yPos[i]) / 2;
+}
+
+void Misc_CalculateSpawn(float xPos[3], float yPos[3], float fSpawn[3]) {
+	for (int i = 0; i < 2; i++) fSpawn[i] = (xPos[i] + yPos[i]) / 2;
+	if (xPos[2] < yPos[2]) fSpawn[2] = xPos[2];
+	else fSpawn[2] = yPos[2];
 }
 
 void Misc_FormatTime(float fTime, char[] cBuffer, int iMaxLength) {
@@ -61,7 +63,7 @@ Action Misc_Run(int iClient) {
 
 		if (iClientSpecMode == 4 || iClientSpecMode == 5) {
 			int iTarget = GetEntPropEnt(iClient, Prop_Send, "m_hObserverTarget");
-			Misc_ShowHud(iClient, iTarget);
+			if (iTarget != -1) Misc_ShowHud(iClient, iTarget);
 		}
 	} else {
 		Misc_ShowHud(iClient, iClient);
@@ -80,7 +82,28 @@ void Misc_ShowHud(int iClient, int iTarget) {
 }
 
 void Misc_StartTimer(int iClient) {
+	if (GetEntityMoveType(iClient) != MOVETYPE_WALK) return;
 	gP_Player[iClient].Record.StartTime = GetGameTime();
 	gP_Player[iClient].RecentlyAbused = false;
 	gP_Player[iClient].Replay.Frame = 0;
+}
+
+void Misc_ConVars() {
+	char[] cBuffer = new char[512];
+
+	BuildPath(Path_SM, cBuffer, 512, "configs/convars.txt");
+	if (!FileExists(cBuffer)) return;
+
+	File fConVar = OpenFile(cBuffer, "r");
+	while (!fConVar.EndOfFile()) {
+		if (fConVar.ReadLine(cBuffer, 512)) {
+			char[][] cTemp = new char[2][64];
+			ExplodeString(cBuffer, " ", cTemp, 2, 64);
+			g_Global.Convars.SetString(cTemp[0], cTemp[1], true);
+
+			ConVar cConVar = FindConVar(cTemp[0]);
+			cConVar.SetString(cTemp[1]);
+			cConVar.AddChangeHook(Hook_ConVarChange);
+		}
+	}
 }

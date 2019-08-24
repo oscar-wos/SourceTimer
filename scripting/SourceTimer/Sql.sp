@@ -54,8 +54,7 @@ void Sql_SelectZones() {
 	char[] cBuffer = new char[512];
 	char[] cMapName = new char[64];
 
-	GetCurrentMap(cBuffer, 512);
-	g_Global.Storage.Escape(cBuffer, cMapName, 64);
+	GetCurrentMap(cMapName, 64);
 	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `id`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2` FROM `zones` WHERE `mapname`='%s';", cMapName);
 	else Format(cBuffer, 512, "SELECT `rowid`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2` FROM `zones` WHERE `mapname`='%s';", cMapName);
 

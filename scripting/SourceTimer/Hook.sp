@@ -4,7 +4,7 @@ Action Hook_OnTakeDamage(int iVictim, int &iAttacker, int &iInflictor, float &fD
 }
 
 Action Hook_StartTouch(int iCaller, int iActivator) {
-	if (!Misc_CheckPlayer(iActivator, PLAYER_INGAME)) return;
+	if (!Misc_CheckPlayer(iActivator, PLAYER_ALIVE)) return;
 	char[] cEntityName = new char[512];
 	char[] cEntityIndex = new char[16];
 	int iIndex;
@@ -125,7 +125,7 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 }
 
 Action Hook_EndTouch(int iCaller, int iActivator) {
-	if (!Misc_CheckPlayer(iActivator, PLAYER_INGAME)) return;
+	if (!Misc_CheckPlayer(iActivator, PLAYER_ALIVE)) return;
 	char[] cEntityName = new char[512];
 	char[] cEntityIndex = new char[16];
 	int iIndex;
@@ -158,4 +158,24 @@ Action Hook_EndTouch(int iCaller, int iActivator) {
 
 	if (gP_Player[iActivator].RecentlyAbused) return;
 	gP_Player[iActivator].CurrentZone = ZONE_UNDEFINED;
+}
+
+void Hook_ConVarChange(ConVar cvConVar, const char[] cOldValue, const char[] cNewValue) {
+	char[] cConVar = new char[64];
+	char[] cConVarValue = new char[64];
+	cvConVar.GetName(cConVar, 64);
+
+	if (!g_Global.Convars.GetString(cConVar, cConVarValue, 64)) return;
+	if (StrEqual(cConVarValue, cNewValue)) return;
+	cvConVar.SetString(cConVarValue);
+}
+
+Action Hook_JoinTeam(int iClient, char[] cCommand, int iArgc) {
+	if (!Misc_CheckPlayer(iClient, PLAYER_VALID)) return;
+	char[] cArg1 = new char[8];
+	GetCmdArg(1, cArg1, 8);
+
+	int iArg1 = StringToInt(cArg1);
+	ChangeClientTeam(iClient, iArg1);
+	if (iArg1 != 1) CS_RespawnPlayer(iClient);
 }

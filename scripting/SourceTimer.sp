@@ -32,17 +32,20 @@
 #define BOTS_MAX 2
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.20"
+#define PLUGIN_VERSION "0.21"
 
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
+#include <cstrike>
 #include <SourceTimer>
 
 Global g_Global;
 Player gP_Player[MAXPLAYERS + 1];
+Bot gB_Bot[BOTS_MAX];
 
 #include "SourceTimer/Admin.sp"
+#include "SourceTimer/Command.sp"
 #include "SourceTimer/Event.sp"
 #include "SourceTimer/Hook.sp"
 #include "SourceTimer/Misc.sp"
@@ -60,7 +63,7 @@ public Plugin myinfo = {
 
 public void OnPluginStart() {
 	g_Global = new Global();
-	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT);
+	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT && TIMER_FLAG_NO_MAPCHANGE);
 	Database.Connect(T_Connect, "sourcetimer");
 
 	ServerCommand("sm_reload_translations");
@@ -78,11 +81,14 @@ public void OnPluginStart() {
 
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
-	RegConsoleCmd("sm_test", Command_Test);
+	AddCommandListener(Hook_JoinTeam, "jointeam");
 
 	Admin_Start();
+	Command_Start();
+	Misc_Start();
 	Replay_Start();
-	Zone_Start();
+
+	RegConsoleCmd("sm_test", Command_Test);
 }
 
 public Action Command_Test(int iClient, int iArgs) {
@@ -90,7 +96,7 @@ public Action Command_Test(int iClient, int iArgs) {
 }
 
 public void OnMapStart() {
-	Misc_PrecacheModels();
+	Misc_Start();
 	Sql_SelectZones();
 }
 
@@ -105,6 +111,11 @@ public void OnMapEnd() {
 		gP_Player[i].RecordCheckpoints.Clear();
 		gP_Player[i].Records.Clear();
 	}
+}
+
+public bool OnClientConnect(int iClient) {
+	if (IsFakeClient(iClient)) Replay_BotAdd(iClient);
+	return true;
 }
 
 public void OnClientPostAdminCheck(int iClient) {
@@ -127,7 +138,7 @@ public void OnClientPostAdminCheck(int iClient) {
 	SDKHook(iClient, SDKHook_OnTakeDamage, Hook_OnTakeDamage);
 }
 
-public void OnClientDisconnect_Post(int iClient) {
+public void OnClientDisconnect(int iClient) {
 	if (!Misc_CheckPlayer(iClient, PLAYER_VALID)) return;
 
 	delete gP_Player[iClient].Checkpoints;

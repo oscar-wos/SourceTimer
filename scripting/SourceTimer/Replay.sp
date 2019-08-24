@@ -5,7 +5,7 @@ void Replay_Start() {
 	if (!DirExists(cBuffer)) CreateDirectory(cBuffer, 511);
 }
 
-void Replay_Load(int iClient, int iStyle, int iGroup) {
+ArrayList Replay_Load(int iClient, int iStyle, int iGroup) {
 	char[] cBuffer = new char[512];
 	char[] cMapName = new char[32];
 	char[] cHeader = new char[128];
@@ -31,6 +31,7 @@ void Replay_Load(int iClient, int iStyle, int iGroup) {
 	ExplodeString(cHeader, "|", cHeaderExplode, 2, 64);
 	iSize = StringToInt(cHeaderExplode[0]);
 
+	ArrayList alFrames = new ArrayList(sizeof(ReplayFrame));
 	any[] aFrameData = new any[128 * 10];
 
 	for (int i = 0; i < iSize; i++) {
@@ -50,10 +51,11 @@ void Replay_Load(int iClient, int iStyle, int iGroup) {
 		rFrame.SetPos(fPos);
 		rFrame.SetAngle(fAngle);
 		rFrame.SetVel(fVel);
-
-		PrintToConsoleAll("%f, %f, %f", fPos[0], fPos[1], fPos[2]);
+		alFrames.PushArray(rFrame);
 	}
+
 	delete fReplay;
+	return alFrames;
 }
 
 void Replay_Save(int iClient, int iStyle, int iGroup, float fTime, ArrayList alFrames) {
@@ -119,9 +121,16 @@ void Replay_Save(int iClient, int iStyle, int iGroup, float fTime, ArrayList alF
 		}
 	}
 
-	PrintToChatAll("%s", cBuffer);
-
 	delete alFrames; delete fReplay;
+}
+
+void Replay_BotAdd(int iClient) {
+	for (int i = 0; i < BOTS_MAX; i++) {
+		if (gB_Bot[i].Client == 0) {
+			gB_Bot[i].Client = iClient;
+			break;
+		}
+	}
 }
 
 Action Replay_Run(int iClient, int& iButtons, float fVel[3], float fAngle[3]) {

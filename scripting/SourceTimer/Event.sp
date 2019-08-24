@@ -5,4 +5,5 @@ Action Event_RoundStart(Event eEvent, char[] cName, bool bDontBroadcast) {
 Action Event_PlayerSpawn(Event eEvent, char[] cName, bool bDontBroadcast) {
 	int iClient = GetClientOfUserId(eEvent.GetInt("userid"));
 	if (IsValidEntity(iClient)) SetEntProp(iClient, Prop_Data, "m_CollisionGroup", 2);
+	Zone_TeleportToStart(iClient);
 }
