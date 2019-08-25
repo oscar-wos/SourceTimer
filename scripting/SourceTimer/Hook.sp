@@ -21,6 +21,7 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 	switch (zZone.Type) {
 		case ZONE_START: {
 			gP_Player[iActivator].Record.StartTime = -1.0;
+			gP_Player[iActivator].Record.Group = zZone.Group;
 			ConVar cnBunny = FindConVar("sv_autobunnyhopping");
 			SendConVarValue(iActivator, cnBunny, "0");
 		} case ZONE_END: {
@@ -124,6 +125,7 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 	}
 
 	gP_Player[iActivator].CurrentZone = iIndex;
+	gP_Player[iActivator].PreviousZone = iIndex;
 }
 
 Action Hook_EndTouch(int iCaller, int iActivator) {

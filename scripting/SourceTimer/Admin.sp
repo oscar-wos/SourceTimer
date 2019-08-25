@@ -344,6 +344,7 @@ int Menu_Delete(Menu mMenu, MenuAction maAction, int iParam1, int iParam2) {
 			Zone_DeleteZone(gA_Admin[iParam1].Zone.Id);
 			Sql_DeleteZone(gA_Admin[iParam1].Zone.Id);
 			Admin_Clear(iParam1);
+			Zone_Reload();
 		}
 	}
 

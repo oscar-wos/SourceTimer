@@ -57,6 +57,13 @@ void Misc_FormatTimePrefix(float fTime, float fDiff, char[] cBuffer, int iMaxLen
 	else Format(cBuffer, iMaxLength, "\x07-%s\x01", cBuffer);
 }
 
+void Misc_FormatTimeHud(float fTime, float fDiff, char[] cBuffer, int iMaxLength) {
+	if (fTime == 0) Format(cBuffer, iMaxLength, "<font color=\"#B0C3D9\">%s", cBuffer);
+	else if (fDiff == 0) Format(cBuffer, iMaxLength, "<font color=\"#E4AE39\">%s", cBuffer);
+	else if (fDiff > 0) Format(cBuffer, iMaxLength, "<font color=\"#A2FF47\">+%s", cBuffer);
+	else Format(cBuffer, iMaxLength, "<font color=\"#FF4040\">-%s", cBuffer);
+}
+
 Action Misc_Run(int iClient) {
 	if (IsClientObserver(iClient)) {
 		int iTarget = GetEntPropEnt(iClient, Prop_Send, "m_hObserverTarget");
@@ -72,32 +79,67 @@ void Misc_ShowHud(int iClient, int iTarget) {
 		char[] cTime = new char[32];
 		float fTime = GetGameTime();
 
-		if (gP_Player[iTarget].PreviousTime != 0.0 && (fTime - gP_Player[iTarget].PreviousTime) < 5) {
-			if (gP_Player[iTarget].Checkpoints.Length > 0) {
-				Checkpoint cCheckpoint; gP_Player[iTarget].Checkpoints.GetArray(gP_Player[iTarget].Checkpoints.Length - 1, cCheckpoint);
-				char[] cOldTime = new char[32];
-
-				Misc_FormatTime(cCheckpoint.Time, cOldTime, 32);
-				FormatEx(cBuffer, 4096, "%s", cOldTime);
-			}
-			/*
-			Zone zZone; g_Global.Zones.GetArray(gP_Player[iTarget].PreviousZone, zZone);
-
-			if (zZone.RecordIndex[iTarget] != -1) {
-				
-				Checkpoint cCheckpoint, c
-				Checkpoint cCheckpoint; gP_Player[iTarget].RecordCheckpoints.GetArray(zZone.RecordIndex[iTarget], cCheckpoint);
-				Misc_FormatTime(cCheckpoint.Time, cOldTime, 32);
-
-				FormatEx(cBuffer, 4096, "%s", cOldTime);
-			}
-			*/
-		}
-
 		Misc_FormatTime(gP_Player[iTarget].Record.StartTime - fTime, cTime, 32);
-		FormatEx(cBuffer, 4096, "%s Time: %s", cBuffer, cTime);
+		FormatEx(cBuffer, 4096, "<pre>Time: %s\t%i/%i", cTime, gP_Player[iTarget].CloneRecordsIndex + 1, gP_Player[iTarget].CloneRecords.Length);
 
+		if (gP_Player[iTarget].PreviousTime != 0.0 && (fTime - gP_Player[iTarget].PreviousTime) < HUD_SHOWPREVIOUS) {
+			if (gP_Player[iTarget].Checkpoints.Length > 0) {
+				char cServerDiff[64], cPersonalDiff[64];
+				float fServerTime, fPersonalTime;
+				Checkpoint cCheckpoint; gP_Player[iTarget].Checkpoints.GetArray(gP_Player[iTarget].Checkpoints.Length - 1, cCheckpoint);
+
+				if (gP_Player[iTarget].PreviousZone != -1) {
+					Zone zZone; g_Global.Zones.GetArray(gP_Player[iTarget].PreviousZone, zZone);
+
+					if (zZone.RecordIndex[0] != -1) {
+						Checkpoint cServerBest; g_Global.Checkpoints.GetArray(zZone.RecordIndex[0], cServerBest);
+						fServerTime = cServerBest.Time;
+					}
+
+					if (zZone.RecordIndex[iTarget] != -1) {
+						Checkpoint cPersonalBest; gP_Player[iTarget].RecordCheckpoints.GetArray(zZone.RecordIndex[iTarget], cPersonalBest);
+						fPersonalTime = cPersonalBest.Time;
+					}
+				}
+
+				Misc_FormatTime(fServerTime - cCheckpoint.Time, cServerDiff, sizeof(cServerDiff));
+				Misc_FormatTime(fPersonalTime - cCheckpoint.Time, cPersonalDiff, sizeof(cPersonalDiff));
+				Misc_FormatTimeHud(fServerTime, fServerTime - cCheckpoint.Time, cServerDiff, sizeof(cServerDiff));
+				Misc_FormatTimeHud(fPersonalTime, fPersonalTime - cCheckpoint.Time, cPersonalDiff, sizeof(cPersonalDiff));
+				FormatEx(cBuffer, 4096, "%s\t%s\n", cBuffer, cServerDiff);
+				FormatEx(cBuffer, 4096, "%s\t\t\t\t\t\t\t%s", cBuffer, cPersonalDiff);
+			}
+		} else {
+			char cServerTime[64], cPersonalTime[64];
+			float fServerTime, fPersonalTime;
+
+			if (gP_Player[iTarget].EndZoneIndex != -1) {
+				Zone zZone; g_Global.Zones.GetArray(gP_Player[iTarget].EndZoneIndex, zZone);
+
+				if (zZone.RecordIndex[0] != -1) {
+					Record rServerBest; g_Global.Records.GetArray(zZone.RecordIndex[0], rServerBest);
+					fServerTime = rServerBest.EndTime;
+				}
+
+				if (zZone.RecordIndex[iTarget] != -1) {
+					Record rPersonalBest; gP_Player[iTarget].Records.GetArray(zZone.RecordIndex[iTarget], rPersonalBest);
+					fPersonalTime = rPersonalBest.EndTime;
+				}
+			}
+
+			Misc_FormatTime(fServerTime, cServerTime, sizeof(cServerTime));
+			Misc_FormatTime(fPersonalTime, cPersonalTime, sizeof(cPersonalTime));
+			FormatEx(cBuffer, 4096, "%s\t%s\n", cBuffer, cServerTime);
+			FormatEx(cBuffer, 4096, "%s\t\t\t\t\t\t\t%s", cBuffer, cPersonalTime);
+		}
+		
+		FormatEx(cBuffer, 4096, "%s</pre>", cBuffer);
 		PrintHintText(iClient, cBuffer);
+
+		if (gP_Player[iTarget].CloneRecordsIndex < gP_Player[iTarget].CloneRecords.Length) {
+			Record rRecord; gP_Player[iTarget].CloneRecords.GetArray(gP_Player[iTarget].CloneRecordsIndex, rRecord);
+			if ((fTime - gP_Player[iTarget].Record.StartTime) > rRecord.EndTime) gP_Player[iTarget].CloneRecordsIndex++;
+		}
 	}
 }
 
@@ -109,6 +151,20 @@ void Misc_StartTimer(int iClient) {
 	gP_Player[iClient].PreviousTime = 0.0;
 	gP_Player[iClient].PreviousZone = 0;
 	gP_Player[iClient].CurrentZone = 0;
+	gP_Player[iClient].CloneRecordsIndex = 0;
+	gP_Player[iClient].EndZoneIndex = g_Global.Zones.FindSingleZone(ZONE_END, gP_Player[iClient].Record.Group);
+
+	gP_Player[iClient].CloneRecords = g_Global.Records.FindByStyleGroup(gP_Player[iClient].Style, gP_Player[iClient].Record.Group);
+	SortADTArrayCustom(gP_Player[iClient].CloneRecords, Sort_CloneRecords);
+}
+
+public int Sort_CloneRecords(int iIndex1, int iIndex2, Handle alRecords, Handle hTest) {
+	Record rRecord1, rRecord2;
+	view_as<Records>(alRecords).GetArray(iIndex1, rRecord1);
+	view_as<Records>(alRecords).GetArray(iIndex2, rRecord2);
+
+	if (rRecord1.EndTime < rRecord2.EndTime) return -1;
+	return 1;
 }
 
 void Misc_ConVars() {
@@ -154,7 +210,7 @@ void Misc_EndMessage(int iClient, int iStyle, int iGroup, float fTime) {
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!Misc_CheckPlayer(i, PLAYER_VALID)) continue;
-		if (i != iClient) Timer_Message(i, "%s%s %s %s", TEXT_PREFIX, TEXT_DEFAULT, cClientName, cBuffer); 
+		if (i != iClient) Timer_Message(i, "%s%s%s %s", TEXT_PREFIX, TEXT_DEFAULT, cClientName, cBuffer); 
 		Timer_Message(i, "%s%s%s", TEXT_PREFIX, TEXT_DEFAULT, cBuffer); 
 	}
 }

@@ -19,7 +19,6 @@ void T_Connect(Database dStorage, const char[] cError, any aData) {
 	g_Global.Storage = dStorage;
 
 	Sql_CreateTables();
-	Sql_SelectZones();
 }
 
 void Sql_CreateTables() {
@@ -57,6 +56,7 @@ void Sql_SelectZones() {
 	char[] cBuffer = new char[512];
 	char[] cMapName = new char[64];
 
+	PrintToChatAll("Firing");
 	GetCurrentMap(cMapName, 64);
 	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `id`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2` FROM `zones` WHERE `mapname`='%s';", cMapName);
 	else Format(cBuffer, 512, "SELECT `rowid`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2` FROM `zones` WHERE `mapname`='%s';", cMapName);

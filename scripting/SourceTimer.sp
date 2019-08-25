@@ -28,12 +28,12 @@
 #define TIMER_INTERVAL 0.1
 #define TIMER_ZONES 16
 #define BOX_BOUNDRY 120.0
-#define HUD_SHOWPREVIOUS 5.0
+#define HUD_SHOWPREVIOUS 3
 #define BOTS_MAX 2
 #define REPLAY_BUFFER_SIZE 128
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.23"
+#define PLUGIN_VERSION "0.24"
 
 #include <sourcemod>
 #include <sdktools>
@@ -76,6 +76,7 @@ public void OnPluginStart() {
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
 		gP_Player[i].Replay = new Replay();
+		gP_Player[i].CloneRecords = new Records();
 
 		SDKHook(i, SDKHook_OnTakeDamage, Hook_OnTakeDamage);
 	}
@@ -128,6 +129,7 @@ public void OnClientPostAdminCheck(int iClient) {
 	gP_Player[iClient].RecordCheckpoints = new Checkpoints();
 	gP_Player[iClient].Records = new Records();
 	gP_Player[iClient].Replay = new Replay();
+	gP_Player[iClient].CloneRecords = new Records();
 
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
 		Zone zZone; g_Global.Zones.GetArray(i, zZone);
@@ -147,6 +149,7 @@ public void OnClientDisconnect(int iClient) {
 	delete gP_Player[iClient].Checkpoints;
 	delete gP_Player[iClient].RecordCheckpoints;
 	delete gP_Player[iClient].Records;
+	delete gP_Player[iClient].CloneRecords;
 
 	delete gP_Player[iClient].Replay.Frames;
 	delete gP_Player[iClient].Replay;

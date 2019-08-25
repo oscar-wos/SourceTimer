@@ -153,6 +153,17 @@ methodmap Records < ArrayList {
 
 		return -1;
 	}
+
+	public Records FindByStyleGroup(int iStyle, int iGroup) {
+		Records rRecords = new Records();
+
+		for (int i = 0; i < this.Length; i++) {
+			Record rRecord; this.GetArray(i, rRecord);
+			if (rRecord.Style == iStyle && rRecord.Group == iGroup) rRecords.PushArray(rRecord);
+		}
+
+		return rRecords;
+	}
 }
 
 enum struct Zone {
@@ -274,15 +285,18 @@ enum struct Bot {
 enum struct Player {
 	Checkpoints RecordCheckpoints;
 	Records Records;
+	Records CloneRecords;
 
 	Checkpoints Checkpoints;
 	Record Record;
 	Replay Replay;
+	int Style;
 	int CurrentZone;
 	int PreviousZone;
+	int EndZoneIndex;
 	float PreviousTime;
-	int Style;
 	bool RecentlyAbused;
+	int CloneRecordsIndex;
 }
 
 methodmap Models < StringMap {
