@@ -51,12 +51,10 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 			Misc_Record(iActivator, iIndex);
 
 			for (int i = 0; i < gP_Player[iActivator].Checkpoints.Length; i++) {
-				Checkpoint cCheckpoint;
-				gP_Player[iActivator].Checkpoints.GetArray(i, cCheckpoint);
+				Checkpoint cCheckpoint; gP_Player[iActivator].Checkpoints.GetArray(i, cCheckpoint);
 
-				Zone zCheckpoint;
 				int iZoneIndex = g_Global.Zones.FindByZoneId(cCheckpoint.ZoneId);
-				g_Global.Zones.GetArray(iZoneIndex, zCheckpoint);
+				Zone zCheckpoint; g_Global.Zones.GetArray(iZoneIndex, zCheckpoint);
 
 				if (zCheckpoint.RecordIndex[0] == -1) zCheckpoint.RecordIndex[0] = g_Global.Checkpoints.Length;
 				else {
@@ -90,14 +88,12 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 
 			float fServerTime, fPersonalTime;
 			if (zZone.RecordIndex[0] != -1) {
-				Checkpoint cServerBest;
-				g_Global.Checkpoints.GetArray(zZone.RecordIndex[0], cServerBest);
+				Checkpoint cServerBest; g_Global.Checkpoints.GetArray(zZone.RecordIndex[0], cServerBest);
 				fServerTime = cServerBest.Time;
 			}
 
 			if (zZone.RecordIndex[iActivator] != -1) {
-				Checkpoint cPersonalBest;
-				gP_Player[iActivator].RecordCheckpoints.GetArray(zZone.RecordIndex[iActivator], cPersonalBest);
+				Checkpoint cPersonalBest; gP_Player[iActivator].RecordCheckpoints.GetArray(zZone.RecordIndex[iActivator], cPersonalBest);
 				fPersonalTime = cPersonalBest.Time;
 			}
 

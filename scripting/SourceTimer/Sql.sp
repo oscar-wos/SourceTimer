@@ -132,8 +132,8 @@ void Sql_SelectRecord(int iClient, int iIndex, int iGroup) {
 	GetCurrentMap(cBuffer, 512);
 	g_Global.Storage.Escape(cBuffer, cMapName, 64);
 
-	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `id`, `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
-	else Format(cBuffer, 512, "SELECT `rowid`, `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
+	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
+	else Format(cBuffer, 512, "SELECT `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
 
 	if (iClient != 0) {
 		int iClientId = GetSteamAccountID(iClient);
@@ -152,8 +152,8 @@ void Sql_SelectCheckpoint(int iClient, int iIndex, int iZoneId) {
 	Query qQuery = new Query();
 	char[] cBuffer = new char[512];
 
-	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `id`, `recordid`, `zoneid`, `time` FROM `checkpoints` WHERE `zoneid`=%i", iZoneId);
-	else Format(cBuffer, 512, "SELECT `rowid`, `recordid`, `zoneid`, `time` FROM `checkpoints` WHERE `zoneid`=%i", iZoneId);
+	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `recordid`, `zoneid`, `time` FROM `checkpoints` WHERE `zoneid`=%i", iZoneId);
+	else Format(cBuffer, 512, "SELECT `recordid`, `zoneid`, `time` FROM `checkpoints` WHERE `zoneid`=%i", iZoneId);
 
 	if (iClient != 0) {
 		int iClientId = GetSteamAccountID(iClient);
@@ -233,23 +233,16 @@ void Query_SelectRecord(DBResultSet rResults, Query qQuery) {
 
 	for (int i = 0; i < rResults.RowCount; i++) {
 		rResults.FetchRow();
-		Record rRecord;
-
-		rRecord.Id = rResults.FetchInt(0);
-		rRecord.EndTime = rResults.FetchFloat(1);
-		rRecord.Group = rResults.FetchInt(2);
-		rRecord.Style = rResults.FetchInt(3);
-
 		if (iClient == 0) {
-			if (i == 0) zZone.RecordIndex[0] = g_Global.Records.Length;
-			g_Global.Records.PushArray(rRecord);
+			int iInsertIndex = Misc_InsertGlobalRecord(rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2));
+			if (i == 0) zZone.RecordIndex[0] = iInsertIndex;
 		} else {
-			if (i == 0) zZone.RecordIndex[iClient] = gP_Player[iClient].Records.Length;
-			gP_Player[iClient].Records.PushArray(rRecord);
+			int iInsertIndex = Misc_InsertPlayerRecord(iClient, rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2));
+			if (i == 0) zZone.RecordIndex[iClient] = iInsertIndex;
 		}
-
-		g_Global.Zones.SetArray(qQuery.Index, zZone);
 	}
+
+	g_Global.Zones.SetArray(qQuery.Index, zZone);
 }
 
 void Query_SelectCheckpoint(DBResultSet rResults, Query qQuery) {
@@ -262,9 +255,9 @@ void Query_SelectCheckpoint(DBResultSet rResults, Query qQuery) {
 		rResults.FetchRow();
 		Checkpoint cCheckpoint;
 
-		cCheckpoint.RecordId  = rResults.FetchInt(1);
-		cCheckpoint.ZoneId = rResults.FetchInt(2);
-		cCheckpoint.Time = rResults.FetchFloat(3);
+		cCheckpoint.RecordId  = rResults.FetchInt(0);
+		cCheckpoint.ZoneId = rResults.FetchInt(1);
+		cCheckpoint.Time = rResults.FetchFloat(2);
 
 		if (iClient == 0) {
 			if (i == 0) zZone.RecordIndex[0] = g_Global.Checkpoints.Length;

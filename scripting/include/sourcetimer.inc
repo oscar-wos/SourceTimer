@@ -138,21 +138,10 @@ enum struct Record {
 	float EndTime;
 	int Group;
 	int Style;
-	int Id;
 }
 
 methodmap Records < ArrayList {
 	public Records() { return view_as<Records>(new ArrayList(sizeof(Record))); }
-
-	public int FindByRecordId(int iRecordId) {
-		for (int i = 0; i < this.Length; i++) {
-			Record rRecord;
-			this.GetArray(i, rRecord);
-			if (rRecord.Id == iRecordId) return i;
-		}
-
-		return -1;
-	}
 
 	public Records FindByStyleGroup(int iStyle, int iGroup) {
 		Records rRecords = new Records();
