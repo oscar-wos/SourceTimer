@@ -75,20 +75,22 @@ Action Misc_Run(int iClient) {
 	if (gP_Player[iClient].Record.StartTime > 0.0) {
 		float fTime = GetGameTime() - gP_Player[iClient].Record.StartTime;
 
-
-		if (gP_Player[iClient].GlobalRecordsIndex < g_Global.Records.Length) {
+		for (int i = 0; i < ARRAYLIST_BUFFER_SIZE && gP_Player[iClient].GlobalRecordsIndex < g_Global.Records.Length; i++) {
 			Record rRecord; g_Global.Records.GetArray(gP_Player[iClient].GlobalRecordsIndex, rRecord);
 			if (fTime > rRecord.EndTime) gP_Player[iClient].GlobalRecordsIndex++;
+			else break;
 		}
 
-		if (gP_Player[iClient].PlayerRecordsIndex < gP_Player[iClient].Records.Length) {
+		for (int i = 0; i < ARRAYLIST_BUFFER_SIZE && gP_Player[iClient].PlayerRecordsIndex < gP_Player[iClient].Records.Length; i++) {
 			Record rRecord; gP_Player[iClient].Records.GetArray(gP_Player[iClient].PlayerRecordsIndex, rRecord);
 			if (fTime > rRecord.EndTime) gP_Player[iClient].PlayerRecordsIndex++;
+			else break;
 		}
 
-		if (gP_Player[iClient].CloneRecordsIndex < gP_Player[iClient].CloneRecords.Length) {
+		for (int i = 0; i < ARRAYLIST_BUFFER_SIZE && gP_Player[iClient].CloneRecordsIndex < gP_Player[iClient].CloneRecords.Length; i++) {
 			Record rRecord; gP_Player[iClient].CloneRecords.GetArray(gP_Player[iClient].CloneRecordsIndex, rRecord);
 			if (fTime > rRecord.EndTime) gP_Player[iClient].CloneRecordsIndex++;
+			else break;
 		}
 	}
 }

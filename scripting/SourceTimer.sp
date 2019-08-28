@@ -31,9 +31,11 @@
 #define HUD_SHOWPREVIOUS 3
 #define BOTS_MAX 2
 #define REPLAY_BUFFER_SIZE 128
+#define ARRAYLIST_BUFFER_SIZE 64
+
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.25"
+#define PLUGIN_VERSION "0.26"
 
 #include <sourcemod>
 #include <sdktools>
