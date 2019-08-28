@@ -234,10 +234,10 @@ void Query_SelectRecord(DBResultSet rResults, Query qQuery) {
 	for (int i = 0; i < rResults.RowCount; i++) {
 		rResults.FetchRow();
 		if (iClient == 0) {
-			int iInsertIndex = Misc_InsertGlobalRecord(rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2));
+			int iInsertIndex = Misc_InsertGlobalRecord(rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2), i);
 			if (i == 0) zZone.RecordIndex[0] = iInsertIndex;
 		} else {
-			int iInsertIndex = Misc_InsertPlayerRecord(iClient, rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2));
+			int iInsertIndex = Misc_InsertPlayerRecord(iClient, rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2), i);
 			if (i == 0) zZone.RecordIndex[iClient] = iInsertIndex;
 		}
 	}

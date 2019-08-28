@@ -31,11 +31,11 @@
 #define HUD_SHOWPREVIOUS 3
 #define BOTS_MAX 2
 #define REPLAY_BUFFER_SIZE 128
-#define ARRAYLIST_BUFFER_SIZE 64
+#define ARRAYLIST_BUFFER_SIZE 256
 
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.26"
+#define PLUGIN_VERSION "0.27"
 
 #include <sourcemod>
 #include <sdktools>
@@ -98,9 +98,10 @@ public void OnPluginStart() {
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-	for (int i = 0; i < g_Global.Records.Length; i++) {
-		Record rRecord; g_Global.Records.GetArray(i, rRecord);
-		PrintToConsole(iClient, "%f", rRecord.EndTime);
+	int iRandom = GetRandomInt(1, 1000);
+	PrintToChatAll("%i", iRandom);
+	for (int i = 0; i < iRandom; i++) {
+		Sql_AddRecord(iClient, gP_Player[iClient].Record.Style, gP_Player[iClient].Record.Group, GetGameTime() - gP_Player[iClient].Record.StartTime, view_as<Checkpoints>(gP_Player[iClient].Checkpoints.Clone()));
 	}
 }
 

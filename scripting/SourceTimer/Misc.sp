@@ -219,7 +219,7 @@ void Misc_EndMessage(int iClient, int iStyle, int iGroup, float fTime) {
 
 	GetClientName(iClient, cClientName, 64);
 	Misc_FormatTime(fTime, cTime, 64);
-	Format(cBuffer, 512, "Finished %i on %i - %s", iGroup, iStyle, cTime);
+	Format(cBuffer, 512, "Finished %i on %i - %s (%i/%i)", iGroup, iStyle, cTime, gP_Player[iClient].CloneRecordsIndex + 1, gP_Player[iClient].CloneRecords.Length);
 
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!Misc_CheckPlayer(i, PLAYER_VALID)) continue;
@@ -246,9 +246,9 @@ int Misc_InsertGlobalRecord(float fTime, int iGroup, int iStyle, int iIndex = 0)
 
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
 		Zone zZone; g_Global.Zones.GetArray(i, zZone);
-		if (zZone.RecordIndex[0] != -1) {
-			if (iIndex <= zZone.RecordIndex[0]) zZone.RecordIndex[0]++;
-		}
+		if (zZone.Type != ZONE_END) continue;
+		if (zZone.RecordIndex[0] == -1) continue;
+		if (iIndex <= zZone.RecordIndex[0]) zZone.RecordIndex[0]++;
 		g_Global.Zones.SetArray(i, zZone);
 	}
 
@@ -273,9 +273,9 @@ int Misc_InsertPlayerRecord(int iClient, float fTime, int iGroup, int iStyle, in
 
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
 		Zone zZone; g_Global.Zones.GetArray(i, zZone);
-		if (zZone.RecordIndex[iClient] != -1) {
-			if (iIndex <= zZone.RecordIndex[iClient]) zZone.RecordIndex[iClient]++;
-		}
+		if (zZone.Type != ZONE_END) continue;
+		if (zZone.RecordIndex[iClient] == -1) continue;
+		if (iIndex <= zZone.RecordIndex[iClient]) zZone.RecordIndex[iClient]++;
 		g_Global.Zones.SetArray(i, zZone);
 	}
 
