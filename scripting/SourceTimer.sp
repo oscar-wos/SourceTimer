@@ -67,7 +67,7 @@ public void OnPluginStart() {
 	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT && TIMER_FLAG_NO_MAPCHANGE);
 	Database.Connect(T_Connect, "sourcetimer");
 
-	ServerCommand("sm_reload_translations");
+	ServerCommand("sm_reload_translationss");
 	LoadTranslations("sourcetimer.phrases");
 
 	for (int i = 1; i <= MaxClients; i++) {
