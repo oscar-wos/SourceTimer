@@ -33,7 +33,7 @@
 #define REPLAY_BUFFER_SIZE 128
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.24"
+#define PLUGIN_VERSION "0.25"
 
 #include <sourcemod>
 #include <sdktools>
@@ -75,28 +75,31 @@ public void OnPluginStart() {
 		gP_Player[i].Checkpoints = new Checkpoints();
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
-		gP_Player[i].Replay = new Replay();
 		gP_Player[i].CloneRecords = new Records();
-
+		gP_Player[i].Replay = new Replay();
+		
 		SDKHook(i, SDKHook_OnTakeDamage, Hook_OnTakeDamage);
 	}
 
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
 	HookUserMessage(GetUserMessageId("TextMsg"), Hook_TextMsg, true);
-	// HookUserMessage(GetUserMessageId("SayText2"), Hook_SayText2, true);
 	AddCommandListener(Hook_JoinTeam, "jointeam");
 
 	Admin_Start();
 	Command_Start();
 	Misc_Start();
 	Replay_Start();
+	Sql_Start();
 
 	RegConsoleCmd("sm_test", Command_Test);
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-	SetEntityMoveType(iClient, GetEntityMoveType(iClient) == MOVETYPE_NOCLIP ? MOVETYPE_WALK : MOVETYPE_NOCLIP);
+	for (int i = 0; i < g_Global.Records.Length; i++) {
+		Record rRecord; g_Global.Records.GetArray(i, rRecord);
+		PrintToConsole(iClient, "%f", rRecord.EndTime);
+	}
 }
 
 public void OnMapStart() {
@@ -114,6 +117,8 @@ public void OnMapEnd() {
 		gP_Player[i].Checkpoints.Clear();
 		gP_Player[i].RecordCheckpoints.Clear();
 		gP_Player[i].Records.Clear();
+		gP_Player[i].CloneRecords.Clear();
+		gP_Player[i].Replay.Clear();
 	}
 }
 
@@ -128,8 +133,8 @@ public void OnClientPostAdminCheck(int iClient) {
 	gP_Player[iClient].Checkpoints = new Checkpoints();
 	gP_Player[iClient].RecordCheckpoints = new Checkpoints();
 	gP_Player[iClient].Records = new Records();
-	gP_Player[iClient].Replay = new Replay();
 	gP_Player[iClient].CloneRecords = new Records();
+	gP_Player[iClient].Replay = new Replay();
 
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
 		Zone zZone; g_Global.Zones.GetArray(i, zZone);

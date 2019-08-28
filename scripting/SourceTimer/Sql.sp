@@ -10,6 +10,11 @@ char g_SqlLiteTables[][] = {
 	"CREATE TABLE IF NOT EXISTS `checkpoints` (`playerid` INT, `recordid` INT, `zoneid` INT, `time` FLOAT);"
 };
 
+void Sql_Start() {
+	Sql_CreateTables();
+}
+
+
 void T_Connect(Database dStorage, const char[] cError, any aData) {
 	if (dStorage == null) LogError("SQL Error, %s", cError);
 	char[] cDriver = new char[32];
@@ -17,8 +22,6 @@ void T_Connect(Database dStorage, const char[] cError, any aData) {
 
 	if (StrEqual(cDriver, "mysql")) g_Global.IsMySql = true;
 	g_Global.Storage = dStorage;
-
-	Sql_CreateTables();
 }
 
 void Sql_CreateTables() {
@@ -167,6 +170,7 @@ void Sql_SelectCheckpoint(int iClient, int iIndex, int iZoneId) {
 
 void Sql_Timer() {
 	if (g_Global.Queries.Length == 0) return;
+	if (g_Global.Storage == null) return;
 	Transaction tQueries = new Transaction();
 
 	for (int i = 0; i < g_Global.Queries.Length; i++) {

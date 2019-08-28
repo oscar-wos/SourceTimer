@@ -290,12 +290,16 @@ enum struct Player {
 	Checkpoints Checkpoints;
 	Record Record;
 	Replay Replay;
+
 	int Style;
-	int CurrentZone;
-	int PreviousZone;
-	int EndZoneIndex;
 	float PreviousTime;
 	bool RecentlyAbused;
+
+	int CurrentZone;
+	int PreviousZone;
+	int EndZone;
+	int GlobalRecordsIndex;
+	int PlayerRecordsIndex;
 	int CloneRecordsIndex;
 }
 

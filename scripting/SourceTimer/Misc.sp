@@ -71,6 +71,26 @@ Action Misc_Run(int iClient) {
 	} else {
 		Misc_ShowHud(iClient, iClient);
 	}
+
+	if (gP_Player[iClient].Record.StartTime > 0.0) {
+		float fTime = GetGameTime() - gP_Player[iClient].Record.StartTime;
+
+
+		if (gP_Player[iClient].GlobalRecordsIndex < g_Global.Records.Length) {
+			Record rRecord; g_Global.Records.GetArray(gP_Player[iClient].GlobalRecordsIndex, rRecord);
+			if (fTime > rRecord.EndTime) gP_Player[iClient].GlobalRecordsIndex++;
+		}
+
+		if (gP_Player[iClient].PlayerRecordsIndex < gP_Player[iClient].Records.Length) {
+			Record rRecord; gP_Player[iClient].Records.GetArray(gP_Player[iClient].PlayerRecordsIndex, rRecord);
+			if (fTime > rRecord.EndTime) gP_Player[iClient].PlayerRecordsIndex++;
+		}
+
+		if (gP_Player[iClient].CloneRecordsIndex < gP_Player[iClient].CloneRecords.Length) {
+			Record rRecord; gP_Player[iClient].CloneRecords.GetArray(gP_Player[iClient].CloneRecordsIndex, rRecord);
+			if (fTime > rRecord.EndTime) gP_Player[iClient].CloneRecordsIndex++;
+		}
+	}
 }
 
 void Misc_ShowHud(int iClient, int iTarget) {
@@ -88,8 +108,13 @@ void Misc_ShowHud(int iClient, int iTarget) {
 				float fServerTime, fPersonalTime;
 				Checkpoint cCheckpoint; gP_Player[iTarget].Checkpoints.GetArray(gP_Player[iTarget].Checkpoints.Length - 1, cCheckpoint);
 
-				if (gP_Player[iTarget].PreviousZone != -1) {
-					Zone zZone; g_Global.Zones.GetArray(gP_Player[iTarget].PreviousZone, zZone);
+				int iZoneIndex;
+
+				if (gP_Player[iTarget].PreviousZone != -1) iZoneIndex = gP_Player[iTarget].PreviousZone;
+				else iZoneIndex = gP_Player[iTarget].CurrentZone;
+
+				if (iZoneIndex != -1) {
+					Zone zZone; g_Global.Zones.GetArray(iZoneIndex, zZone);
 
 					if (zZone.RecordIndex[0] != -1) {
 						Checkpoint cServerBest; g_Global.Checkpoints.GetArray(zZone.RecordIndex[0], cServerBest);
@@ -113,8 +138,8 @@ void Misc_ShowHud(int iClient, int iTarget) {
 			char cServerTime[64], cPersonalTime[64];
 			float fServerTime, fPersonalTime;
 
-			if (gP_Player[iTarget].EndZoneIndex != -1) {
-				Zone zZone; g_Global.Zones.GetArray(gP_Player[iTarget].EndZoneIndex, zZone);
+			if (gP_Player[iTarget].EndZone != -1) {
+				Zone zZone; g_Global.Zones.GetArray(gP_Player[iTarget].EndZone, zZone);
 
 				if (zZone.RecordIndex[0] != -1) {
 					Record rServerBest; g_Global.Records.GetArray(zZone.RecordIndex[0], rServerBest);
@@ -135,11 +160,6 @@ void Misc_ShowHud(int iClient, int iTarget) {
 		
 		FormatEx(cBuffer, 4096, "%s</pre>", cBuffer);
 		PrintHintText(iClient, cBuffer);
-
-		if (gP_Player[iTarget].CloneRecordsIndex < gP_Player[iTarget].CloneRecords.Length) {
-			Record rRecord; gP_Player[iTarget].CloneRecords.GetArray(gP_Player[iTarget].CloneRecordsIndex, rRecord);
-			if ((fTime - gP_Player[iTarget].Record.StartTime) > rRecord.EndTime) gP_Player[iTarget].CloneRecordsIndex++;
-		}
 	}
 }
 
@@ -149,22 +169,13 @@ void Misc_StartTimer(int iClient) {
 	gP_Player[iClient].RecentlyAbused = false;
 	gP_Player[iClient].Replay.Frame = 0;
 	gP_Player[iClient].PreviousTime = 0.0;
-	gP_Player[iClient].PreviousZone = 0;
-	gP_Player[iClient].CurrentZone = 0;
+	gP_Player[iClient].GlobalRecordsIndex = 0;
+	gP_Player[iClient].PlayerRecordsIndex = 0;
 	gP_Player[iClient].CloneRecordsIndex = 0;
-	gP_Player[iClient].EndZoneIndex = g_Global.Zones.FindSingleZone(ZONE_END, gP_Player[iClient].Record.Group);
-
+	gP_Player[iClient].CurrentZone = 0;
+	gP_Player[iClient].PreviousZone = 0;
+	gP_Player[iClient].EndZone = g_Global.Zones.FindSingleZone(ZONE_END, gP_Player[iClient].Record.Group);
 	gP_Player[iClient].CloneRecords = g_Global.Records.FindByStyleGroup(gP_Player[iClient].Style, gP_Player[iClient].Record.Group);
-	SortADTArrayCustom(gP_Player[iClient].CloneRecords, Sort_CloneRecords);
-}
-
-public int Sort_CloneRecords(int iIndex1, int iIndex2, Handle alRecords, Handle hTest) {
-	Record rRecord1, rRecord2;
-	view_as<Records>(alRecords).GetArray(iIndex1, rRecord1);
-	view_as<Records>(alRecords).GetArray(iIndex2, rRecord2);
-
-	if (rRecord1.EndTime < rRecord2.EndTime) return -1;
-	return 1;
 }
 
 void Misc_ConVars() {
@@ -211,6 +222,58 @@ void Misc_EndMessage(int iClient, int iStyle, int iGroup, float fTime) {
 	for (int i = 1; i <= MaxClients; i++) {
 		if (!Misc_CheckPlayer(i, PLAYER_VALID)) continue;
 		if (i != iClient) Timer_Message(i, "%s%s%s %s", TEXT_PREFIX, TEXT_DEFAULT, cClientName, cBuffer); 
-		Timer_Message(i, "%s%s%s", TEXT_PREFIX, TEXT_DEFAULT, cBuffer); 
+		else Timer_Message(i, "%s%s%s", TEXT_PREFIX, TEXT_DEFAULT, cBuffer); 
 	}
+}
+
+void Misc_Record(int iClient, int iIndex) {
+	for (int i = gP_Player[iClient].GlobalRecordsIndex; i < g_Global.Records.Length; i++) {
+		Record rRecord; g_Global.Records.GetArray(i, rRecord);
+		if (gP_Player[iClient].Record.EndTime > rRecord.EndTime) gP_Player[iClient].GlobalRecordsIndex++;
+		else break;
+	}
+
+	if (gP_Player[iClient].GlobalRecordsIndex > g_Global.Records.Length - 1) g_Global.Records.Resize(gP_Player[iClient].GlobalRecordsIndex + 1);
+	else g_Global.Records.ShiftUp(gP_Player[iClient].GlobalRecordsIndex);
+	g_Global.Records.SetArray(gP_Player[iClient].GlobalRecordsIndex, gP_Player[iClient].Record);
+
+	for (int i = gP_Player[iClient].PlayerRecordsIndex; i < gP_Player[iClient].Records.Length; i++) {
+		Record rRecord; gP_Player[iClient].Records.GetArray(i, rRecord);
+		if (gP_Player[iClient].Record.EndTime > rRecord.EndTime) gP_Player[iClient].PlayerRecordsIndex++;
+		else break;
+	}
+
+	if (gP_Player[iClient].PlayerRecordsIndex > gP_Player[iClient].Records.Length - 1) gP_Player[iClient].Records.Resize(gP_Player[iClient].PlayerRecordsIndex + 1);
+	else gP_Player[iClient].Records.ShiftUp(gP_Player[iClient].PlayerRecordsIndex);
+	gP_Player[iClient].Records.SetArray(gP_Player[iClient].PlayerRecordsIndex, gP_Player[iClient].Record);
+
+	for (int i = 0; i < g_Global.Zones.Length; i++) {
+		Zone zZone; g_Global.Zones.GetArray(i, zZone);
+
+		if (zZone.RecordIndex[0] != -1) {
+			if (gP_Player[iClient].GlobalRecordsIndex <= zZone.RecordIndex[0]) zZone.RecordIndex[0]++;
+		}
+
+		if (zZone.RecordIndex[iClient] != -1) {
+			if (gP_Player[iClient].PlayerRecordsIndex <= zZone.RecordIndex[iClient]) zZone.RecordIndex[iClient]++;
+		}
+
+		g_Global.Zones.SetArray(i, zZone);
+	}
+
+	Zone zZone; g_Global.Zones.GetArray(iIndex, zZone);
+
+	if (zZone.RecordIndex[0] == -1) zZone.RecordIndex[0] = gP_Player[iClient].GlobalRecordsIndex;
+	else {
+		Record rServerBest; g_Global.Records.GetArray(zZone.RecordIndex[0], rServerBest);
+		if (gP_Player[iClient].Record.EndTime < rServerBest.EndTime) zZone.RecordIndex[0] = gP_Player[iClient].GlobalRecordsIndex;
+	}
+
+	if (zZone.RecordIndex[iClient] == -1) zZone.RecordIndex[iClient] = gP_Player[iClient].PlayerRecordsIndex;
+	else {
+		Record rPlayerBest; g_Global.Records.GetArray(zZone.RecordIndex[iClient], rPlayerBest);
+		if (gP_Player[iClient].Record.EndTime < rPlayerBest.EndTime) zZone.RecordIndex[iClient] = gP_Player[iClient].PlayerRecordsIndex;
+	}
+
+	g_Global.Zones.SetArray(iIndex, zZone);
 }
