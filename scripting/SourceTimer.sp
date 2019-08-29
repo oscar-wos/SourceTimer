@@ -19,7 +19,7 @@
 // Compiler Info: Pawn 1.10 - build 6435
 #pragma semicolon 1
 #pragma newdecls required
-#pragma dynamic 262144
+#pragma dynamic 512000
 
 // Config TODO
 #define TEXT_DEFAULT "{white}"
@@ -31,11 +31,10 @@
 #define HUD_SHOWPREVIOUS 3
 #define BOTS_MAX 2
 #define REPLAY_BUFFER_SIZE 128
-#define ARRAYLIST_BUFFER_SIZE 256
-
+#define ARRAYLIST_BUFFER_SIZE 8
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.28"
+#define PLUGIN_VERSION "0.29"
 
 #include <sourcemod>
 #include <sdktools>
@@ -69,7 +68,7 @@ public void OnPluginStart() {
 	g_Global.Timer = CreateTimer(TIMER_INTERVAL, Timer_Global, _, TIMER_REPEAT && TIMER_FLAG_NO_MAPCHANGE);
 	Database.Connect(T_Connect, "sourcetimer");
 
-	ServerCommand("sm_reload_translationss");
+	ServerCommand("sm_reload_translations");
 	LoadTranslations("sourcetimer.phrases");
 
 	for (int i = 1; i <= MaxClients; i++) {
@@ -99,7 +98,9 @@ public void OnPluginStart() {
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-	
+	for (int i = 0; i < 1000; i++) {
+		Sql_AddRecord(iClient, gP_Player[iClient].Record.Style, gP_Player[iClient].Record.Group, (GetGameTime() - gP_Player[iClient].Record.StartTime) + (i * 0.001), view_as<Checkpoints>(gP_Player[iClient].Checkpoints.Clone()));
+	}
 }
 
 public void OnMapStart() {
@@ -183,4 +184,8 @@ public Action OnPlayerRunCmd(int iClient, int& iButtons, int& iImpulse, float fV
 	Replay_Run(iClient, iButtons, fVel, fAngle);
 	Zone_Run(iClient, iButtons);
 	return Plugin_Changed;
+}
+
+public void OnGameFrame() {
+	Misc_Frame();
 }

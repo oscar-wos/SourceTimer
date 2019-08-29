@@ -61,6 +61,9 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 			cCheckpoint.Time = GetGameTime() - gP_Player[iActivator].Record.StartTime;
 			cCheckpoint.ZoneId = zZone.Id;
 
+			cCheckpoint.GlobalCheckpointIndex = gP_Player[iActivator].GlobalCheckpointsIndex;
+			cCheckpoint.PlayerCheckpointIndex = gP_Player[iActivator].PlayerCheckpointsIndex;
+
 			float fServerTime, fPersonalTime;
 			if (zZone.RecordIndex[0] != -1) {
 				Checkpoint cServerBest; g_Global.Checkpoints.GetArray(zZone.RecordIndex[0], cServerBest);

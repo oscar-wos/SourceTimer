@@ -102,6 +102,9 @@ int C_Colors[][] = {
 enum struct Checkpoint {
 	float Time;
 	int ZoneId;
+
+	int GlobalCheckpointIndex;
+	int PlayerCheckpointIndex;
 }
 
 methodmap Checkpoints < ArrayList {
@@ -279,6 +282,9 @@ enum struct Player {
 	int CloneRecordsIndex;
 	Records ClonePersonalRecords;
 	int ClonePersonalRecordsIndex;
+
+	int GlobalCheckpointsIndex;
+	int PlayerCheckpointsIndex;
 }
 
 methodmap Models < StringMap {
@@ -363,12 +369,29 @@ methodmap Query < StringMap {
 	}
 }
 
+enum {
+	QUEUE_RECORD,
+	QUEUE_CHECKPOINT
+}
+
+enum struct Queue {
+	int Type;
+	float Time;
+	int ZoneId;
+	int Group;
+	int Style;
+	int Client;
+	int Index;
+	int ZoneIndex;
+}
+
 methodmap Global < StringMap {
 	public Global() {
 		StringMap smMap = new StringMap();
 
 		smMap.SetValue("timer", INVALID_HANDLE);
 		smMap.SetValue("storage", INVALID_HANDLE);
+		smMap.SetValue("queue", new ArrayList(sizeof(Queue)));
 		smMap.SetValue("queries", new ArrayList());
 		smMap.SetValue("checkpoints", new Checkpoints());
 		smMap.SetValue("records", new Records());
@@ -387,6 +410,11 @@ methodmap Global < StringMap {
 	property Database Storage {
 		public get() { Database dStorage; this.GetValue("storage", dStorage); return dStorage; }
 		public set(Database dStorage) { this.SetValue("storage", dStorage); }
+	}
+
+	property ArrayList Queue {
+		public get() { ArrayList alQueue; this.GetValue("queue", alQueue); return alQueue; }
+		public set(ArrayList alQueue) { this.SetValue("queue", alQueue); }
 	}
 
 	property bool IsMySql {

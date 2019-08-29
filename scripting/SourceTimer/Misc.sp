@@ -87,11 +87,52 @@ Action Misc_Run(int iClient) {
 			else break;
 		}
 
+		for (int i = 0; i < ARRAYLIST_BUFFER_SIZE && gP_Player[iClient].GlobalCheckpointsIndex < g_Global.Checkpoints.Length; i++) {
+			Checkpoint cCheckpoint; g_Global.Checkpoints.GetArray(gP_Player[iClient].GlobalCheckpointsIndex, cCheckpoint);
+			if (fTime > cCheckpoint.Time) gP_Player[iClient].GlobalCheckpointsIndex++;
+			else break;
+		}
+
+		for (int i = 0; i < ARRAYLIST_BUFFER_SIZE && gP_Player[iClient].PlayerCheckpointsIndex < gP_Player[iClient].RecordCheckpoints.Length; i++) {
+			Checkpoint cCheckpoint; g_Global.Checkpoints.GetArray(gP_Player[iClient].PlayerCheckpointsIndex, cCheckpoint);
+			if (fTime > cCheckpoint.Time) gP_Player[iClient].PlayerCheckpointsIndex++;
+			else break;
+		}
+
 		for (int i = 0; i < ARRAYLIST_BUFFER_SIZE && gP_Player[iClient].CloneRecordsIndex < gP_Player[iClient].CloneRecords.Length; i++) {
 			Record rRecord; gP_Player[iClient].CloneRecords.GetArray(gP_Player[iClient].CloneRecordsIndex, rRecord);
 			if (fTime > rRecord.EndTime) gP_Player[iClient].CloneRecordsIndex++;
 			else break;
 		}
+	}
+}
+
+void Misc_Frame() {
+	for (int i = 0; i < ARRAYLIST_BUFFER_SIZE && i < g_Global.Queue.Length; i++) {
+		Queue qQueue; g_Global.Queue.GetArray(i, qQueue);
+		int iClient = GetClientOfUserId(qQueue.Client);
+		int iGlobalIndex, iPlayerIndex;
+		
+		if (!(iClient == 0 && qQueue.Client != 0)) {
+			switch (qQueue.Type) {
+				case QUEUE_RECORD: {
+					if (iClient == 0) iGlobalIndex = Misc_InsertGlobalRecord(qQueue.Time, qQueue.Group, qQueue.Style, qQueue.Index);
+					else iPlayerIndex = Misc_InsertPlayerRecord(iClient, qQueue.Time, qQueue.Group, qQueue.Style, qQueue.Index);
+				} case QUEUE_CHECKPOINT: {
+					if (iClient == 0) iGlobalIndex = Misc_InsertGlobalCheckpoint(qQueue.Time, qQueue.ZoneId, qQueue.Index);
+					else iPlayerIndex = Misc_InsertPlayerCheckpoint(iClient, qQueue.Time, qQueue.ZoneId, qQueue.Index);
+				}
+			}
+
+			if (qQueue.Index == 0) {
+				Zone zZone; g_Global.Zones.GetArray(qQueue.ZoneIndex, zZone);
+				if (iClient == 0) zZone.RecordIndex[0] = iGlobalIndex;
+				else zZone.RecordIndex[iClient] = iPlayerIndex;
+				g_Global.Zones.SetArray(qQueue.ZoneIndex, zZone);
+			}
+		}
+
+		g_Global.Queue.Erase(i);
 	}
 }
 
@@ -173,6 +214,8 @@ void Misc_StartTimer(int iClient) {
 	gP_Player[iClient].PreviousTime = 0.0;
 	gP_Player[iClient].GlobalRecordsIndex = 0;
 	gP_Player[iClient].PlayerRecordsIndex = 0;
+	gP_Player[iClient].GlobalCheckpointsIndex = 0;
+	gP_Player[iClient].PlayerCheckpointsIndex = 0;
 	gP_Player[iClient].CloneRecordsIndex = 0;
 	gP_Player[iClient].ClonePersonalRecordsIndex = 0;
 	gP_Player[iClient].EndZone = g_Global.Zones.FindSingleZone(ZONE_END, gP_Player[iClient].Record.Group);
@@ -228,14 +271,14 @@ void Misc_EndMessage(int iClient, int iStyle, int iGroup, float fTime) {
 	}
 }
 
-int Misc_InsertGlobalCheckpoint(float fTime, int iZoneId, int iIndex = 0) {
-	for (int i = iIndex; i < g_Global.Checkpoints.Length; i++) {
-		Checkpoint cCheckpoint; g_Global.Checkpoints.GetArray(i, cCheckpoint);
+int Misc_InsertGlobalCheckpoint(float fTime, int iZoneId, int iIndex) {
+	while (iIndex < g_Global.Checkpoints.Length) {
+		Checkpoint cCheckpoint; g_Global.Checkpoints.GetArray(iIndex, cCheckpoint);
 		if (fTime > cCheckpoint.Time) iIndex++;
 		else break;
 	}
 
-	if (iIndex == g_Global.Checkpoints.Length) g_Global.Checkpoints.Resize(iIndex + 1);
+	if (iIndex >= g_Global.Checkpoints.Length) g_Global.Checkpoints.Resize(iIndex + 1);
 	else g_Global.Checkpoints.ShiftUp(iIndex);
 
 	Checkpoint cCheckpoint;
@@ -248,7 +291,7 @@ int Misc_InsertGlobalCheckpoint(float fTime, int iZoneId, int iIndex = 0) {
 		if (zZone.Type != ZONE_CHECKPOINT) continue;
 		if (zZone.RecordIndex[0] == -1) continue;
 		if (iIndex <= zZone.RecordIndex[0]) { 
-			zZone.RecordIndex++;
+			zZone.RecordIndex[0]++;
 			g_Global.Zones.SetArray(i, zZone);
 		}	
 	}
@@ -256,14 +299,14 @@ int Misc_InsertGlobalCheckpoint(float fTime, int iZoneId, int iIndex = 0) {
 	return iIndex;
 }
 
-int Misc_InsertPlayerCheckpoint(int iClient, float fTime, int iZoneId, int iIndex = 0) {
-	for (int i = iIndex; i < gP_Player[iClient].RecordCheckpoints.Length; i++) {
-		Checkpoint cCheckpoint; gP_Player[iClient].RecordCheckpoints.GetArray(i, cCheckpoint);
+int Misc_InsertPlayerCheckpoint(int iClient, float fTime, int iZoneId, int iIndex) {
+	while (iIndex < gP_Player[iClient].RecordCheckpoints.Length) {
+		Checkpoint cCheckpoint; gP_Player[iClient].RecordCheckpoints.GetArray(iIndex, cCheckpoint);
 		if (fTime > cCheckpoint.Time) iIndex++;
 		else break;
 	}
 
-	if (iIndex == gP_Player[iClient].RecordCheckpoints.Length) gP_Player[iClient].RecordCheckpoints.Resize(iIndex + 1);
+	if (iIndex >= gP_Player[iClient].RecordCheckpoints.Length) gP_Player[iClient].RecordCheckpoints.Resize(iIndex + 1);
 	else gP_Player[iClient].RecordCheckpoints.ShiftUp(iIndex);
 
 	Checkpoint cCheckpoint;
@@ -274,9 +317,9 @@ int Misc_InsertPlayerCheckpoint(int iClient, float fTime, int iZoneId, int iInde
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
 		Zone zZone; g_Global.Zones.GetArray(i, zZone);
 		if (zZone.Type != ZONE_CHECKPOINT) continue;
-		if (zZone.RecordIndex[0] == -1) continue;
-		if (iIndex <= zZone.RecordIndex[0]) { 
-			zZone.RecordIndex++;
+		if (zZone.RecordIndex[iClient] == -1) continue;
+		if (iIndex <= zZone.RecordIndex[iClient]) { 
+			zZone.RecordIndex[iClient]++;
 			g_Global.Zones.SetArray(i, zZone);
 		}	
 	}
@@ -284,14 +327,14 @@ int Misc_InsertPlayerCheckpoint(int iClient, float fTime, int iZoneId, int iInde
 	return iIndex;
 }
 
-int Misc_InsertGlobalRecord(float fTime, int iGroup, int iStyle, int iIndex = 0) {
-	for (int i = iIndex; i < g_Global.Records.Length; i++) {
-		Record rRecord; g_Global.Records.GetArray(i, rRecord);
+int Misc_InsertGlobalRecord(float fTime, int iGroup, int iStyle, int iIndex) {
+	while (iIndex < g_Global.Records.Length) {
+		Record rRecord; g_Global.Records.GetArray(iIndex, rRecord);
 		if (fTime > rRecord.EndTime) iIndex++;
 		else break;
 	}
 
-	if (iIndex == g_Global.Records.Length) g_Global.Records.Resize(iIndex + 1);
+	if (iIndex >= g_Global.Records.Length) g_Global.Records.Resize(iIndex + 1);
 	else g_Global.Records.ShiftUp(iIndex);
 
 	Record rRecord;
@@ -313,14 +356,14 @@ int Misc_InsertGlobalRecord(float fTime, int iGroup, int iStyle, int iIndex = 0)
 	return iIndex;
 }
 
-int Misc_InsertPlayerRecord(int iClient, float fTime, int iGroup, int iStyle, int iIndex = 0) {
-	for (int i = iIndex; i < gP_Player[iClient].Records.Length; i++) {
-		Record rRecord; gP_Player[iClient].Records.GetArray(i, rRecord);
+int Misc_InsertPlayerRecord(int iClient, float fTime, int iGroup, int iStyle, int iIndex) {
+	while (iIndex < gP_Player[iClient].Records.Length) {
+		Record rRecord; gP_Player[iClient].Records.GetArray(iIndex, rRecord);
 		if (fTime > rRecord.EndTime) iIndex++;
 		else break;
 	}
 
-	if (iIndex == gP_Player[iClient].Records.Length) gP_Player[iClient].Records.Resize(iIndex + 1);
+	if (iIndex >= gP_Player[iClient].Records.Length) gP_Player[iClient].Records.Resize(iIndex + 1);
 	else gP_Player[iClient].Records.ShiftUp(iIndex);
 
 	Record rRecord;
@@ -366,8 +409,8 @@ void Misc_Record(int iClient, int iZoneIndex) {
 		int iCheckpointIndex = g_Global.Zones.FindByZoneId(cCheckpoint.ZoneId);
 		g_Global.Zones.GetArray(iCheckpointIndex, zZone);
 		
-		iGlobalIndex = Misc_InsertGlobalCheckpoint(cCheckpoint.Time, cCheckpoint.ZoneId, 0);
-		iPlayerIndex = Misc_InsertPlayerCheckpoint(iClient, cCheckpoint.Time, cCheckpoint.ZoneId, 0);
+		iGlobalIndex = Misc_InsertGlobalCheckpoint(cCheckpoint.Time, cCheckpoint.ZoneId, cCheckpoint.GlobalCheckpointIndex);
+		iPlayerIndex = Misc_InsertPlayerCheckpoint(iClient, cCheckpoint.Time, cCheckpoint.ZoneId, cCheckpoint.PlayerCheckpointIndex);
 
 		if (zZone.RecordIndex[0] == -1) zZone.RecordIndex[0] = iGlobalIndex;
 		else {
@@ -377,7 +420,7 @@ void Misc_Record(int iClient, int iZoneIndex) {
 
 		if (zZone.RecordIndex[iClient] == -1) zZone.RecordIndex[iClient] = iPlayerIndex;
 		else {
-			Checkpoint cPlayerBest; g_Global.Checkpoints.GetArray(zZone.RecordIndex[iClient], cPlayerBest);
+			Checkpoint cPlayerBest; gP_Player[iClient].RecordCheckpoints.GetArray(zZone.RecordIndex[iClient], cPlayerBest);
 			if (cCheckpoint.Time < cPlayerBest.Time) zZone.RecordIndex[iClient] = iPlayerIndex;
 		}
 

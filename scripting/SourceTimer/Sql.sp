@@ -96,7 +96,7 @@ void Sql_AddRecord(int iClient, int iStyle, int iGroup, float fTime, Checkpoints
 
 	GetCurrentMap(cMapName, 64);
 	int iClientId = GetSteamAccountID(iClient);
-	
+
 	if (g_Global.IsMySql) Format(cBuffer, 512, "INSERT INTO `records` (`mapname`, `playerid`, `style`, `group`, `time`) VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
 	else Format(cBuffer, 512, "INSERT INTO `records` ('mapname', 'playerid', 'style', 'group', 'time') VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
 	
@@ -220,40 +220,35 @@ void Query_SelectRecord(DBResultSet rResults, Query qQuery) {
 	int iClient = GetClientOfUserId(qQuery.Client);
 	if (iClient == 0 && qQuery.Client != 0) return;
 
-	Zone zZone; g_Global.Zones.GetArray(qQuery.Index, zZone);
-
 	for (int i = 0; i < rResults.RowCount; i++) {
-		rResults.FetchRow();
-		if (iClient == 0) {
-			int iInsertIndex = Misc_InsertGlobalRecord(rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2), i);
-			if (i == 0) zZone.RecordIndex[0] = iInsertIndex;
-		} else {
-			int iInsertIndex = Misc_InsertPlayerRecord(iClient, rResults.FetchFloat(0), rResults.FetchInt(1), rResults.FetchInt(2), i);
-			if (i == 0) zZone.RecordIndex[iClient] = iInsertIndex;
-		}
-	}
+		rResults.FetchRow(); Queue qQueue;
+		qQueue.Client = qQuery.Client;
 
-	g_Global.Zones.SetArray(qQuery.Index, zZone);
+		qQueue.Type = QUEUE_RECORD;
+		qQueue.Time = rResults.FetchFloat(0);
+		qQueue.Group = rResults.FetchInt(1);
+		qQueue.Style = rResults.FetchInt(2);
+		qQueue.Index = i;
+		qQueue.ZoneIndex = qQuery.Index;
+		g_Global.Queue.PushArray(qQueue);
+	}
 }
 
 void Query_SelectCheckpoint(DBResultSet rResults, Query qQuery) {
 	int iClient = GetClientOfUserId(qQuery.Client);
 	if (iClient == 0 && qQuery.Client != 0) return;
 
-	Zone zZone; g_Global.Zones.GetArray(qQuery.Index, zZone);
-
 	for (int i = 0; i < rResults.RowCount; i++) {
-		rResults.FetchRow();
-		if (iClient == 0) {
-			int iInsertIndex = Misc_InsertGlobalCheckpoint(rResults.FetchFloat(0), rResults.FetchInt(1), i);
-			if (i == 0) zZone.RecordIndex[0] = iInsertIndex;
-		} else {
-			int iInsertIndex = Misc_InsertPlayerCheckpoint(iClient, rResults.FetchFloat(0), rResults.FetchInt(1), i);
-			if (i == 0) zZone.RecordIndex[iClient] = iInsertIndex;
-		}
-	}
+		rResults.FetchRow(); Queue qQueue;
+		qQueue.Client = qQuery.Client;
 
-	g_Global.Zones.SetArray(qQuery.Index, zZone);
+		qQueue.Type = QUEUE_CHECKPOINT;
+		qQueue.Time = rResults.FetchFloat(0);
+		qQueue.ZoneId = rResults.FetchInt(1);
+		qQueue.Index = i;
+		qQueue.ZoneIndex = qQuery.Index;
+		g_Global.Queue.PushArray(qQueue);
+	}
 }
 
 void T_Success(Database dStorage, any aData, int iQueries, DBResultSet[] rResults, Query[] qQuery) {
