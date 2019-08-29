@@ -102,23 +102,10 @@ int C_Colors[][] = {
 enum struct Checkpoint {
 	float Time;
 	int ZoneId;
-	int RecordId;
 }
 
 methodmap Checkpoints < ArrayList {
 	public Checkpoints() { return view_as<Checkpoints>(new ArrayList(sizeof(Checkpoint))); }
-
-	public Checkpoints FindByRecordId(int iRecordId) {
-		Checkpoints cCheckpoints = new Checkpoints();
-
-		for (int i = 0; i < this.Length; i++) {
-			Checkpoint cCheckpoint;
-			this.GetArray(i, cCheckpoint);
-			if (cCheckpoint.RecordId == iRecordId) cCheckpoints.PushArray(cCheckpoint);
-		}
-
-		return cCheckpoints;
-	}
 
 	public Checkpoints FindByZoneId(int iZoneId) {
 		Checkpoints cCheckpoints = new Checkpoints();
@@ -273,23 +260,25 @@ enum struct Bot {
 
 enum struct Player {
 	Checkpoints RecordCheckpoints;
-	Records Records;
-	Records CloneRecords;
-
 	Checkpoints Checkpoints;
 	Record Record;
 	Replay Replay;
 
-	int Style;
+	
 	float PreviousTime;
 	bool RecentlyAbused;
-
 	int CurrentZone;
 	int PreviousZone;
 	int EndZone;
+	int Style;
+
 	int GlobalRecordsIndex;
+	Records Records;
 	int PlayerRecordsIndex;
+	Records CloneRecords;
 	int CloneRecordsIndex;
+	Records ClonePersonalRecords;
+	int ClonePersonalRecordsIndex;
 }
 
 methodmap Models < StringMap {

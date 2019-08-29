@@ -41,13 +41,10 @@ void Sql_AddZone(int iIndex, float xPos[3], float yPos[3], int iType, int iGroup
 	char[] cBuffer = new char[512];
 	char[] cMapName = new char[64];
 
-	GetCurrentMap(cBuffer, 512);
-	g_Global.Storage.Escape(cBuffer, cMapName, 64);
-
+	GetCurrentMap(cMapName, 64);
 	if (g_Global.IsMySql) Format(cBuffer, 512, "INSERT INTO `zones` (`mapname`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2`) VALUES ('%s', %i, %i, %f, %f, %f, %f, %f, %f);", cMapName, iType, iGroup, xPos[0], xPos[1], xPos[2], yPos[0], yPos[1], yPos[2]);
 	else Format(cBuffer, 512, "INSERT INTO `zones` ('mapname', 'type', 'group', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2') VALUES ('%s', %i, %i, %f, %f, %f, %f, %f, %f);", cMapName, iType, iGroup, xPos[0], xPos[1], xPos[2], yPos[0], yPos[1], yPos[2]);
 	
-
 	qQuery.SetQuery(cBuffer);
 	qQuery.Index = iIndex;
 	qQuery.Type = QUERY_INSERTZONE;
@@ -59,7 +56,6 @@ void Sql_SelectZones() {
 	char[] cBuffer = new char[512];
 	char[] cMapName = new char[64];
 
-	PrintToChatAll("Firing");
 	GetCurrentMap(cMapName, 64);
 	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `id`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2` FROM `zones` WHERE `mapname`='%s';", cMapName);
 	else Format(cBuffer, 512, "SELECT `rowid`, `type`, `group`, `x0`, `x1`, `x2`, `y0`, `y1`, `y2` FROM `zones` WHERE `mapname`='%s';", cMapName);
@@ -98,10 +94,9 @@ void Sql_AddRecord(int iClient, int iStyle, int iGroup, float fTime, Checkpoints
 	char[] cBuffer = new char[512];
 	char[] cMapName = new char[64];
 
-	GetCurrentMap(cBuffer, 512);
-	g_Global.Storage.Escape(cBuffer, cMapName, 64);
+	GetCurrentMap(cMapName, 64);
 	int iClientId = GetSteamAccountID(iClient);
-
+	
 	if (g_Global.IsMySql) Format(cBuffer, 512, "INSERT INTO `records` (`mapname`, `playerid`, `style`, `group`, `time`) VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
 	else Format(cBuffer, 512, "INSERT INTO `records` ('mapname', 'playerid', 'style', 'group', 'time') VALUES ('%s', %i, %i, %i, %f);", cMapName, iClientId, iStyle, iGroup, fTime);
 	
@@ -129,11 +124,8 @@ void Sql_SelectRecord(int iClient, int iIndex, int iGroup) {
 	char[] cBuffer = new char[512];
 	char[] cMapName = new char[64];
 
-	GetCurrentMap(cBuffer, 512);
-	g_Global.Storage.Escape(cBuffer, cMapName, 64);
-
-	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
-	else Format(cBuffer, 512, "SELECT `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
+	GetCurrentMap(cMapName, 64);
+	Format(cBuffer, 512, "SELECT `time`, `group`, `style` FROM `records` WHERE `mapname`='%s' AND `group`=%i", cMapName, iGroup, ZONE_END);
 
 	if (iClient != 0) {
 		int iClientId = GetSteamAccountID(iClient);
@@ -152,8 +144,7 @@ void Sql_SelectCheckpoint(int iClient, int iIndex, int iZoneId) {
 	Query qQuery = new Query();
 	char[] cBuffer = new char[512];
 
-	if (g_Global.IsMySql) Format(cBuffer, 512, "SELECT `recordid`, `zoneid`, `time` FROM `checkpoints` WHERE `zoneid`=%i", iZoneId);
-	else Format(cBuffer, 512, "SELECT `recordid`, `zoneid`, `time` FROM `checkpoints` WHERE `zoneid`=%i", iZoneId);
+	Format(cBuffer, 512, "SELECT `time`, `zoneid` FROM `checkpoints` WHERE `zoneid`=%i", iZoneId);
 
 	if (iClient != 0) {
 		int iClientId = GetSteamAccountID(iClient);
@@ -253,18 +244,12 @@ void Query_SelectCheckpoint(DBResultSet rResults, Query qQuery) {
 
 	for (int i = 0; i < rResults.RowCount; i++) {
 		rResults.FetchRow();
-		Checkpoint cCheckpoint;
-
-		cCheckpoint.RecordId  = rResults.FetchInt(0);
-		cCheckpoint.ZoneId = rResults.FetchInt(1);
-		cCheckpoint.Time = rResults.FetchFloat(2);
-
 		if (iClient == 0) {
-			if (i == 0) zZone.RecordIndex[0] = g_Global.Checkpoints.Length;
-			g_Global.Checkpoints.PushArray(cCheckpoint);
+			int iInsertIndex = Misc_InsertGlobalCheckpoint(rResults.FetchFloat(0), rResults.FetchInt(1), i);
+			if (i == 0) zZone.RecordIndex[0] = iInsertIndex;
 		} else {
-			if (i == 0) zZone.RecordIndex[iClient] = gP_Player[iClient].RecordCheckpoints.Length;
-			gP_Player[iClient].RecordCheckpoints.PushArray(cCheckpoint);
+			int iInsertIndex = Misc_InsertPlayerCheckpoint(iClient, rResults.FetchFloat(0), rResults.FetchInt(1), i);
+			if (i == 0) zZone.RecordIndex[iClient] = iInsertIndex;
 		}
 	}
 

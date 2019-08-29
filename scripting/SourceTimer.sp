@@ -35,7 +35,7 @@
 
 
 #define PLUGIN_NAME "Source Timer"
-#define PLUGIN_VERSION "0.27"
+#define PLUGIN_VERSION "0.28"
 
 #include <sourcemod>
 #include <sdktools>
@@ -78,6 +78,7 @@ public void OnPluginStart() {
 		gP_Player[i].RecordCheckpoints = new Checkpoints();
 		gP_Player[i].Records = new Records();
 		gP_Player[i].CloneRecords = new Records();
+		gP_Player[i].ClonePersonalRecords = new Records();
 		gP_Player[i].Replay = new Replay();
 		
 		SDKHook(i, SDKHook_OnTakeDamage, Hook_OnTakeDamage);
@@ -98,11 +99,7 @@ public void OnPluginStart() {
 }
 
 public Action Command_Test(int iClient, int iArgs) {
-	int iRandom = GetRandomInt(1, 1000);
-	PrintToChatAll("%i", iRandom);
-	for (int i = 0; i < iRandom; i++) {
-		Sql_AddRecord(iClient, gP_Player[iClient].Record.Style, gP_Player[iClient].Record.Group, GetGameTime() - gP_Player[iClient].Record.StartTime, view_as<Checkpoints>(gP_Player[iClient].Checkpoints.Clone()));
-	}
+	
 }
 
 public void OnMapStart() {
@@ -121,6 +118,7 @@ public void OnMapEnd() {
 		gP_Player[i].RecordCheckpoints.Clear();
 		gP_Player[i].Records.Clear();
 		gP_Player[i].CloneRecords.Clear();
+		gP_Player[i].ClonePersonalRecords.Clear();
 		gP_Player[i].Replay.Clear();
 	}
 }
@@ -137,6 +135,7 @@ public void OnClientPostAdminCheck(int iClient) {
 	gP_Player[iClient].RecordCheckpoints = new Checkpoints();
 	gP_Player[iClient].Records = new Records();
 	gP_Player[iClient].CloneRecords = new Records();
+	gP_Player[iClient].ClonePersonalRecords = new Records();
 	gP_Player[iClient].Replay = new Replay();
 
 	for (int i = 0; i < g_Global.Zones.Length; i++) {
@@ -158,6 +157,7 @@ public void OnClientDisconnect(int iClient) {
 	delete gP_Player[iClient].RecordCheckpoints;
 	delete gP_Player[iClient].Records;
 	delete gP_Player[iClient].CloneRecords;
+	delete gP_Player[iClient].ClonePersonalRecords;
 
 	delete gP_Player[iClient].Replay.Frames;
 	delete gP_Player[iClient].Replay;

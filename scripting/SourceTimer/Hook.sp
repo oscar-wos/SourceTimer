@@ -49,31 +49,6 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 			Sql_AddRecord(iActivator, gP_Player[iActivator].Record.Style, gP_Player[iActivator].Record.Group, gP_Player[iActivator].Record.EndTime, view_as<Checkpoints>(gP_Player[iActivator].Checkpoints.Clone()));
 			Replay_Save(iActivator, gP_Player[iActivator].Record.Style, gP_Player[iActivator].Record.Group, gP_Player[iActivator].Record.EndTime, gP_Player[iActivator].Replay.Frames.Clone());
 			Misc_Record(iActivator, iIndex);
-
-			for (int i = 0; i < gP_Player[iActivator].Checkpoints.Length; i++) {
-				Checkpoint cCheckpoint; gP_Player[iActivator].Checkpoints.GetArray(i, cCheckpoint);
-
-				int iZoneIndex = g_Global.Zones.FindByZoneId(cCheckpoint.ZoneId);
-				Zone zCheckpoint; g_Global.Zones.GetArray(iZoneIndex, zCheckpoint);
-
-				if (zCheckpoint.RecordIndex[0] == -1) zCheckpoint.RecordIndex[0] = g_Global.Checkpoints.Length;
-				else {
-					Checkpoint cCheckpointServerBest;
-					g_Global.Checkpoints.GetArray(zCheckpoint.RecordIndex[0], cCheckpointServerBest);
-					if (cCheckpoint.Time < cCheckpointServerBest.Time || cCheckpointServerBest.Time == 0) zCheckpoint.RecordIndex[0] = g_Global.Checkpoints.Length;
-				}
-
-				if (zCheckpoint.RecordIndex[iActivator] == -1) zCheckpoint.RecordIndex[iActivator] = gP_Player[iActivator].RecordCheckpoints.Length;
-				else {
-					Checkpoint cCheckpointPersonalBest;
-					gP_Player[iActivator].RecordCheckpoints.GetArray(zCheckpoint.RecordIndex[iActivator], cCheckpointPersonalBest);
-					if (cCheckpoint.Time < cCheckpointPersonalBest.Time || cCheckpointPersonalBest.Time == 0) zCheckpoint.RecordIndex[iActivator] = gP_Player[iActivator].RecordCheckpoints.Length;
-				}
-
-				g_Global.Zones.SetArray(iZoneIndex, zCheckpoint);
-				g_Global.Checkpoints.PushArray(cCheckpoint);
-				gP_Player[iActivator].RecordCheckpoints.PushArray(cCheckpoint);
-			}
 		} case ZONE_CHECKPOINT: {
 			if (gP_Player[iActivator].Record.StartTime <= 0.0) return;
 			if (gP_Player[iActivator].Record.Group != zZone.Group) return;
@@ -109,7 +84,6 @@ Action Hook_StartTouch(int iCaller, int iActivator) {
 
 Action Hook_EndTouch(int iCaller, int iActivator) {
 	if (!Misc_CheckPlayer(iActivator, PLAYER_ALIVE)) return;
-	if (gP_Player[iActivator].RecentlyAbused) return;
 	char[] cEntityName = new char[512];
 	char[] cEntityIndex = new char[16];
 	int iIndex;
@@ -139,6 +113,7 @@ Action Hook_EndTouch(int iCaller, int iActivator) {
 		}	
 	}
 
+	if (gP_Player[iActivator].RecentlyAbused) return;
 	gP_Player[iActivator].CurrentZone = -1;
 	gP_Player[iActivator].PreviousZone = iIndex;
 }
